@@ -58,7 +58,7 @@
 | `e`     | Forward to end of current/next word        |
 | `ge`    | Backward to end of previous word           |
 
-![vim_wordwise_motion](vim_wordwise_motion)
+![vim_wordwise_motion](http://imgur.com/AWDavlq)
 
 | Object | Definition                                                                                                               |
 |--------|--------------------------------------------------------------------------------------------------------------------------|

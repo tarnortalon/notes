@@ -241,8 +241,8 @@ bound to promise objects that are not evaluated yet.
 the expression slot and the calling environment (i.e., `.GlobalEnv`) in the
 environment slot.
 
-  * Argument `condition` is bound to a promise object that has the expression `a
->= 4` in the expression slot and `.GlobalEnv` in the environment slot.
+  * Argument `condition` is bound to a promise object that has the expression
+`a >= 4` in the expression slot and `.GlobalEnv` in the environment slot.
 
 * `x` and `condition` are then passed to the `subset2()` function as arguments.
 They are also bound to promise objects.

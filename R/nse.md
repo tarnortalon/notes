@@ -40,17 +40,74 @@ expression **in the right environment**.
 `quote()` simply captures an unevaluated expression and does not do any
 transformation.
 
-`eval()` is the opposite of `quote()`. In its simplest form when only one
-expression argument (e.g., an expression captured by `substitute()` or
-`quote()`) is supplied, it evaluates the expression in the current calling
-environment of `eval()`. This makes `eval(quote(x))` equivalent to `x`,
-regardless of what `x` is.
+`eval()` is the opposite of `quote()`.
 
-`eval()`'s second argument **specifies the environment (e.g., a list, a data
+* In its simplest form when only one expression argument (e.g., an expression
+captured by `substitute()` or `quote()`) is supplied, it evaluates the
+expression in the current calling environment of `eval()`. This makes
+`eval(quote(x))` equivalent to `x`, regardless of what `x` is.
+
+* `eval()`'s second argument **specifies the environment (e.g., a list, a data
 frame, or an environment) in which the code is executed**. This is the key to
 NSE as it alters the meaning of the original expression.
 
+An example of such non-standard evaluation is a subset function that accepts a
+data frame and a condition to subset it.
+
+``` r
+subset2 <- function(x, condition) {
+  # condition is "preserved" rather than evaluated here.
+  # Should it be evaluated, it would throw an error because most likely the
+  # variable doesn't exist outside of the data frame.
+  condition_call <- substitute(condition)
+  # Here the condition is evaluated in the context of the data frame.
+  r <- eval(condition_call, x)
+  x[r, ]
+}
+
+sample_df <- data.frame(a = 1:5, b = 5:1, c = c(5, 3, 1, 4, 1))
+
+subset2(sample_df, a >= 4)
+#>   a b c
+#> 4 4 2 4
+#> 5 5 1 1
+```
+
 ## Scoping of NSE
+
+The previous `subset2` example runs into unexpected results or errors
+when `condition` includes variables defined in the function, such as `x`,
+`condition`, or `condition_call`.
+
+``` r
+y <- 4
+x <- 4
+condition <- 4
+condition_call <- 4
+
+subset2(sample_df, a == 4)
+#>   a b c
+#> 4 4 2 4
+subset2(sample_df, a == y)
+#>   a b c
+#> 4 4 2 4
+subset2(sample_df, a == x)
+#>       a  b  c
+#> 1     1  5  5
+#> 2     2  4  3
+#> 3     3  3  1
+#> 4     4  2  4
+#> 5     5  1  1
+#> NA   NA NA NA
+#> NA.1 NA NA NA
+subset2(sample_df, a == condition)
+#> Error in eval(condition_call, x): object 'a' not found
+subset2(sample_df, a == condition_call)
+#> Warning in a == condition_call: longer object length is not a multiple of
+#> shorter object length
+#> [1] a b c
+#> <0 rows> (or 0-length row.names)
+```
 
 When `eval()` can't find a variable in its second argument (when it's a
 (pair)list or a data frame), by default it looks in the calling environment of
@@ -62,6 +119,47 @@ be applied through `enclos`.
 This essentially allows **dynamic scoping**: the values come from location where
 a function is called, not where it is defined.
 
+After providing the `enclos` argument, the function works properly.
+
+``` r
+subset2 <- function(x, condition) {
+  condition_call <- substitute(condition)
+  # By providing enclos = parent.frame(), eval() tries to find any variables
+  # that are not found in the data frame x in parent.frame(), that is the
+  # calling environment of subset2().
+  r <- eval(condition_call, x, parent.frame())
+  x[r, ]
+}
+
+x <- 4
+subset2(sample_df, a == x)
+#>   a b c
+#> 4 4 2 4
+```
+
+## Calling from another function
+
+When called from another function, `subset2` throws an error.
+
+``` r
+subset2 <- function(x, condition) {
+  condition_call <- substitute(condition)
+  r <- eval(condition_call, x, parent.frame())
+  x[r, ]
+}
+
+scramble <- function(x) x[sample(nrow(x)), ]
+
+subscramble <- function(x, condition) {
+  scramble(subset2(x, condition))
+}
+
+subscramble(sample_df, a >= 4)
+#> Error in eval(condition_call, x, parent.frame()): object 'a' not found
+```
+
+When `a >= 4` is passed as `condition` to `subscramble()`, it's not captured as
+an unevaluated expression.
 
 [1]: http://adv-r.hadley.nz/nse.html
 [2]: https://stat.ethz.ch/R-manual/R-devel/library/base/html/substitute.html

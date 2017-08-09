@@ -116,5 +116,40 @@ f3(l, a + 1)
 #> a + 1
 ```
 
+### A solution
+
+A viable solution is to write a SE version of the NSE function (called an escape
+hatch by Hadley Wickham). The SE function accepts quoted expression instead of
+raw expression as argument. The NSE function then can be turned into a wrapper
+around the SE function by quoting the non-standard expressions typed by user and
+pass them to the SE function. Any other outer function that calls the function
+should also quote their argument expressions and pass them to the SE function.
+
+``` r
+# An SE version of the function
+f_ <- function(l, q_expr) {
+  eval(q_expr, l, parent.frame())
+  }
+
+# An NSE wrapper around the SE function
+f <- function(l, expr) {
+  q_expr <- substitute(expr)
+    f_(l, q_expr)
+    }
+
+# Check there's nothing in the global environment, except the function and the list
+ls()
+#> [1] "f"  "f_" "l"
+
+# Call the NSE function
+f(l, a + 1)
+#> [1] 2
+```
+
+### A `rlang` solution
+
+
+
+
 [1]: http://dplyr.tidyverse.org/articles/programming.html
 [2]: http://rlang.tidyverse.org/articles/tidy-evaluation.html

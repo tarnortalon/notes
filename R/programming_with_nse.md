@@ -116,7 +116,7 @@ f3(l, a + 1)
 #> a + 1
 ```
 
-### A solution
+### An escape hatch solution
 
 A viable solution is to write a SE version of the NSE function (called an escape
 hatch by Hadley Wickham). The SE function accepts quoted expression instead of
@@ -148,8 +148,32 @@ f(l, a + 1)
 
 ### A `rlang` solution
 
+A newer soltion is to use the `rlang` package.
 
+``` r
+library(rlang)
 
+# An NSE function that accepts raw expression as input
+f <- function(l, expr) {
+  q_expr <- enquo(expr)
+  eval_tidy(q_expr, l)
+}
+
+f(l, a + 1)
+#> [1] 2
+```
+
+We can also write an outer NSE function that calls `f()` directly.
+
+``` r
+f5 <- function(l, expr) {
+  q_expr <- enquo(expr)
+  f(l, !! q_expr)
+}
+
+f5(l, a + 1)
+#> [1] 2
+```
 
 [1]: http://dplyr.tidyverse.org/articles/programming.html
 [2]: http://rlang.tidyverse.org/articles/tidy-evaluation.html

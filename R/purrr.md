@@ -32,6 +32,10 @@ levels.
   * A `.default` value can be supplied and it will be used when the extracted
 element is not present.
 
+* `map_at()` and `map_if()` apply the function to selective elements of the
+vector/list based on the position or predicate supplied. Otherwise, they behave
+in the same way as `map()`.
+
 ## Typed `map()`
 
 R is not a strong-typed language, so it's hard to ascertain what types of output
@@ -79,6 +83,14 @@ names will be use to match argument names, if present.
   * `pmap_lgl()`, `pmap_int()`, `pmap_dbl()`, `pmap_chr()`, `pmap_dfr()`,
 `pmap_dfc()`, and `pwalk()` are also available.
 
+* Indexed map
+
+`imap()`, an indexed map, is short hand for `map2(x, names(x), ...)`, if `x` has
+names, or `map2(x, seq_along(x), ...)` if it does not.
+
+  * `imap_lgl()`, `imap_int()`, `imap_dbl()`, `imap_chr()`, `imap_dfr()`,
+`imap_dfc()`, and `iwalk()` are also available.
+
 * Modify elements "in-place"
 
 `modify()` is shortcut for `x[] <- map(x, .f)`. It modifies the input
@@ -96,11 +108,22 @@ of the input vector/list to map on.
 
     * `modify_depth(x, 2, fun)` is equivalent to `x[] <- map(x, ~map(., fun))`.
 
+* Apply a function to list-element of a list.
+
+Suppose `x` is a list. `x[[1]]` is the first element of the list while `x[1]` is
+the first list-element of the list (i.e., it behaves like a one-element list).
+
+`lmap()`, `lmap_at()`, and `lmap_if()` behave like `map()`, `map_at()`, and
+`map_if()`, but exclusively on list-elements of a list. When they are used on a
+data frame, they operate on individual columns of the data frame.
+
 ## Related materials
 
 * [Iteration][1] in [R for Data Science][2]
 
 ## References
+
+* [`purrr` package on GitHub][6]
 
 * [`purrr` package documentation][3]
 
@@ -109,3 +132,4 @@ of the input vector/list to map on.
 [3]: http://purrr.tidyverse.org/index.html
 [4]: http://purrr.tidyverse.org/reference/map.html
 [5]: https://stat.ethz.ch/R-manual/R-devel/library/base/html/lapply.html
+[6]: https://github.com/tidyverse/purrr

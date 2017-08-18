@@ -117,6 +117,20 @@ the first list-element of the list (i.e., it behaves like a one-element list).
 `map_if()`, but exclusively on list-elements of a list. When they are used on a
 data frame, they operate on individual columns of the data frame.
 
+* Invoke functions
+
+  * `invoke()` takes a function and its arguments in a list. It's a wrapper
+around `do.call()` that makes it easy to use in a pipe.
+
+  * `invoke_map()` takes a list of functions as the first argument and a
+list of lists as the second argument. It then invoke each function with its
+corresponding argument. That's why the length of the second argument should be
+equal to the length of the first argument.
+
+    * `invoke_map()` has the usual typed variants: `invoke_map_lgl()`,
+`invoke_map_int()`, `invoke_map_dbl()`, `invoke_map_chr()`, `invoke_map_dfr()`,
+and `invoke_map_dfc()`.
+
 ## Related materials
 
 * [Iteration][1] in [R for Data Science][2]

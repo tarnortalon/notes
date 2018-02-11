@@ -41,14 +41,14 @@ See information on *display line* and soft wrapping in [this vimcast][1].
 | Command | Move cursor                                 |
 |---------|---------------------------------------------|
 | `j`     | Down one real line                          |
-| `gj`    | Down one display line                       |
 | `k`     | Up one real line                            |
-| `gk`    | Up one display line                         |
 | `0`     | To first character of real line             |
-| `g0`    | To first chracter of display line           |
 | `^`     | To first nonblank character of real line    |
-| `g^`    | To first nonblank character of display line |
 | `$`     | To end of real line                         |
+| `gj`    | Down one display line                       |
+| `gk`    | Up one display line                         |
+| `g0`    | To first chracter of display line           |
+| `g^`    | To first nonblank character of display line |
 | `g$`    | To end of display line                      |
 
 ### Word-wise motion

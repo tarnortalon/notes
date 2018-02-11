@@ -36,6 +36,8 @@
 
 ### Line-wise motion
 
+See information on *display line* and soft wrapping in [this vimcast][1].
+
 | Command | Move cursor                                 |
 |---------|---------------------------------------------|
 | `j`     | Down one real line                          |
@@ -300,3 +302,5 @@ This is Tip 4 from Drew Neil's Practical Vim.
 > Whenever Vim makes it easy to repeat an action or a motion, it always provides
 > some way of backing out in case we accidentally go too far. It always helps to
 > know where the reverse gear is.
+
+[1]: http://vimcasts.org/episodes/soft-wrapping-text/

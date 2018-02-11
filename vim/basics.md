@@ -15,9 +15,9 @@
 
 ### Visual operator
 
-| Trigger | Effect                                    |
-|---------|-------------------------------------------|
-| `U`     | Convert selected characters to uppercase |
+| Trigger   | Effect                                      |
+| --------- | ------------------------------------------- |
+| `U`       | Convert selected characters to uppercase    |
 
 ## Double operator
 
@@ -274,13 +274,13 @@
 
 ### Resizing and Rearranging windows
 
-| Command                           | Effect                                   |
-|-----------------------------------|------------------------------------------|
-| `<C-w>=`                          | Equalize width and height of all windows |
-| `<C-w>_`                          | Maximize height of the active window     |
-| <code>&lt;C-w>&#124;</code>    | Maximize width of the active window      |
-| `[N]<C-w>_`                       | Set active window height to [N] rows     |
-| <code>[N]&lt;C-w>&#124;</code> | Set active window width to [N] columns   |
+| Command                             | Effect                                     |
+| ----------------------------------- | ------------------------------------------ |
+| `<C-w>=`                            | Equalize width and height of all windows   |
+| `<C-w>_`                            | Maximize height of the active window       |
+| <code>&lt;C-w>&#124;</code>         | Maximize width of the active window        |
+| `[N]<C-w>_`                         | Set active window height to [N] rows       |
+| <code>[N]&lt;C-w>&#124;</code>      | Set active window width to [N] columns     |
 
 ### Moving window to tab
 
@@ -294,6 +294,9 @@
 
 This is Tip 4 from Drew Neil's Practical Vim.
 
-> When facing a repetitive task, we can achieve an optimal editing strategy by making both the motion and the change repeatable.
-> 
-> Whenever Vim makes it easy to repeat an action or a motion, it always provides some way of backing out in case we accidentally go too far. It always helps to know where the reverse gear is.
+> When facing a repetitive task, we can achieve an optimal editing strategy by
+> making both the motion and the change repeatable.
+>
+> Whenever Vim makes it easy to repeat an action or a motion, it always provides
+> some way of backing out in case we accidentally go too far. It always helps to
+> know where the reverse gear is.

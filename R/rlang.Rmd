@@ -1,0 +1,229 @@
+---
+title: "rlang"
+author: "Jarod G.R. Meng"
+date: "5/1/2018"
+output:
+  md_document:
+    variant: "markdown_github"
+    toc: true
+    toc_depth: 4
+---
+
+# R language
+
+```{r setup, include=FALSE}
+library(rlang)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Concepts
+
+* An R [expression][7] is an object that represents an *action* that can be
+performed by R. It can be represented as a list of calls, symbols, constants
+etc.
+
+* [Quoting][1] or quotation is the action of capturing an expression instead of
+evaluating it.
+
+
+* **Quasiquotation** is the combination of quoting an expression while allowing
+immediate evaluation (unquoting) of part of that expression.
+
+  * [Unquoting][2] or unquotation allows selective evaluation parts of a quoted
+  expression.
+
+* Quosure
+
+## Expressions
+
+### Overview
+
+An expression is also called an **abstract syntax tree** (**AST**) because it
+represents the hierarchical tree structure of the code.
+
+Note that the [Expressions][6] chapter in [Advanced R][9] refers to base R's
+expression as [**expression objects**][12] and uses the term *expression* to
+include following objects.
+
+1. **Constants** are “self-quoting” in the sense that the expression used to
+represent a constant is the constant itself.
+
+1. [Symbols][11] represent variable names.
+
+1. [Calls][10] define the tree in AST. A call behaves similarly to a
+(potentially nested) list.
+
+    * It has a `length()`.
+
+    * You can extract elements with `[[`, `[`, and `$`.
+
+    * Calls can contain other calls (hence nested list).
+
+1. **Pairlists** have been replaced by lists almost everywhere. The only place
+you are likely to see pairlists in R is when working with function arguments.
+
+### Two ways of creating R expressions
+
+1. You can **build** expressions using calls and symbols from parts and pieces,
+e.g., using `call()` function in base R, or `call2()` in `rlang`.
+
+1. The other way to create expressions is by quotation or quasiquotation, i.e.,
+by intercepting an expression instead of evaluating it.
+
+### Base R expression functions
+
+#### Expression and its components
+
+* `expression()` captures its arguments (unevaluated) in a vector of type
+"expression" which can be coerced into a list.
+
+  ```{r base_r_expression}
+  x <- expression("R", a <- 1, 2 * 5, LETTERS)
+  
+  x
+  as.list(x)
+  typeof(x)
+  class(x)
+  length(x)
+  sapply(x, typeof)
+  sapply(x, class)
+  ```
+
+* `as.symbol()` and `as.name()` coerce the argument to a name.
+
+  ```{r base_r_symbol}
+  x <- as.symbol("R")
+  
+  typeof(x)
+  class(x)
+  ```
+
+* `call()` creates an unevaluated function call which consists of the named
+function applied to the given arguments.
+
+  ```{r base_r_call}
+  x <- call("*", 2, 5)
+  
+  x
+  typeof(x)
+  class(x)
+  ```
+
+  Note that although the returned call is unevaluated, the arguments supplied to
+  `call()` are evaluated.
+  
+  ```{r base_r_call_args}
+  a <- 2
+  b <- 5
+  x <- call("+", a, b)
+  
+  x
+  ```
+
+### Expression-related functions in `rlang`
+
+* `expr()` and `exprs()` capture the expressions *you* supply (e.g., through
+typing in an interactive session).
+
+* `enexpr()` and `exexprs()` capture the expressions *user* supplies (e.g.,
+through arguments in a function).
+
+  * `ensym()` and `ensyms()` are variants of `enexpr()` and `enexprs()` that
+check the captured expression is either a string (which they convert to symbol)
+or a symbol. If anything else is supplied they throw an error.
+
+#### `rlang` expression functions vs. base R expression functions
+
+* `enexpr(arg)` corresponds to `substitute(arg)`.
+
+* `expr()` is like `quote()`.
+
+* `exprs()` is equivalent to `alist()`.
+
+* `enexprs()` has no equivalent function in base R, but its behavior can be
+reproduced with `eval(substitute(alist(...)))`.
+
+The difference is that all quotation functions in `rlang` support unquotation,
+so they are quasiquotation functions.
+
+#### Conversion between string and expression
+
+Conversion from strings to expressions is the base for functions like `source()`
+.
+
+* `parse()` returns the parsed but unevaluated expressions in a list.
+
+  ```{r base_r_parse}
+  x <- parse(
+    text = c('"R"', "a <- 1", "2 * 5", "LETTERS")
+  )
+  
+  x
+  typeof(x)
+  class(x)
+  length(x)
+  sapply(x, typeof)
+  sapply(x, class)
+  ```
+
+* `deparse()` turns unevaluated expressions into character strings.
+
+  ```{r base_r_deparse}
+  x <- parse(text = "a <- 1")[[1]]
+  y <- quote(b <- 2)
+  
+  deparse(x)
+  deparse(y)
+  ```
+
+## Quotation
+
+### Base R
+
+There are two ways of quoting in base R.
+
+1. [*Formula*][5] is one of the most important quoting operators in R. It's
+usually used for the specification of statistical models.
+
+1. The other family of quoting operator in base R is `quote()`, and
+`substitute()` functions (see [documentation][4]).
+
+    * `quote()` simply returns its argument unevaluated as a call.
+
+      ```{r base_r_quote}
+      x <- quote(seq(1, 10, 1))
+      
+      typeof(x)
+      class(x)
+      ```
+
+    * `substitute()` takes an R expression and an `env` argument. It returns a
+    call in which any variables bound in `env` are substituted.
+
+      ```{r base_r_substitute}
+      e <- new.env()
+      e$a <- 1
+      x <- substitute(a * 10, env = e)
+      
+      x
+      typeof(x)
+      class(x)
+      ```
+
+The difference is that **a formula captures its execution environment with its
+expression** whereas **a quoting function only captures its expression**.
+
+### `rlang` quotation
+
+[1]: http://dplyr.tidyverse.org/articles/programming.html#quoting
+[2]: http://dplyr.tidyverse.org/articles/programming.html#unquoting
+[3]: https://stat.ethz.ch/R-manual/R-patched/library/base/html/tilde.html
+[4]: http://stat.ethz.ch/R-manual/R-devel/library/base/html/substitute.html
+[5]: https://stat.ethz.ch/R-manual/R-patched/library/stats/html/formula.html
+[6]: https://adv-r.hadley.nz/expressions.html
+[7]: https://stat.ethz.ch/R-manual/R-devel/library/base/html/expression.html
+[8]: https://stat.ethz.ch/R-manual/R-devel/library/base/html/parse.html
+[9]: https://adv-r.hadley.nz/
+[10]: https://stat.ethz.ch/R-manual/R-devel/library/base/html/call.html
+[11]: https://stat.ethz.ch/R-manual/R-devel/library/base/html/name.html
+[12]: https://adv-r.hadley.nz/expressions.html#expression-objects

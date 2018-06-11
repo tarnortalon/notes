@@ -1,4 +1,4 @@
-#include <iostream>
+#include <iostream> // preprocessor directive
 
 int main()
 {

@@ -1,0 +1,285 @@
+---
+title: "Basic statistics"
+output: html_notebook
+---
+
+Learning statistics
+
+Assuming there's a population. Let's first assume that the underlying distribution is a normal distribution. We can simulate 10,000 such values easily.
+
+```{r}
+set.seed(42)
+N <- 10000
+X <- rnorm(N)
+```
+
+## Population mean and median
+
+Mean is the **expected value of an element** in the population. Since it's computed over a population, it's a **parameter** of the population.
+
+$$
+\mu = E[X_i] = \sum_{i=1}^{N}(X_ip_i)
+$$
+
+Since each element in the population has an equal probability, each of them has a `1/N` probability.
+
+```{r}
+MU <- sum(X * (1/N))
+```
+
+Above is the textbook definition of the mean. There are also other intrepretation of what a mean is. For example, let's define the mean as the number `a` that is the *closest* to all elements in the population.
+
+Now the question becomes how we define the distance between a number and each element in the population. An straightforward choice is the absolute value of difference, i.e.,
+
+$$
+|X_i - a|
+$$
+We can sum the absolute differences over all elements of the population.
+
+$$
+\sum_{i=1}^{N}(|{X_i-a}|)
+$$
+
+In the case of a discrete population, the value that minimizes the sum of absolute
+differences is the **median** of the population, i.e., the *middle* element. [This question exchange](https://math.stackexchange.com/questions/113270/the-median-minimizes-the-sum-of-absolute-deviations-the-l-1-norm) provides some proof for this result.
+
+We can verify that it's indeed the median that minimizes the sum.
+
+```{r}
+# Generate a lot of possible `a` values
+A <- seq(from = -2, to = 2, by = 0.0001)
+sum_abs_diff <- sapply(A, function(a) sum(abs(X-a)))
+(a <- mean(A[which(sum_abs_diff == min(sum_abs_diff))]))
+```
+
+```{r}
+all.equal(median(X), a, tolerance = 0.001)
+```
+
+Another way of defining the distance between two numbers is the square of their difference. Like the absolute difference, this metric is also always positive.
+
+Assume that there is a `b` value that minimizes the sum of all squared differences between `b` and the elements of the population.
+
+$$
+\sum_{i=1}^{N}(X_{i}-b)^2
+$$
+
+To find the `b` value, we can set its derivative to 0.
+
+$$
+\frac{d}{db}(\sum_{i=1}^{N}(X_{i}-b)^2) = 0 \\
+\frac{d}{db}(\sum_{i=1}^{N}(X_{i}^2 - 2bX_{i} + b^2)) = 0 \\
+\frac{d}{db}(\sum_{i=1}^{N}X_{i}^2-2b\sum_{i=1}^{N}X_{i}+Nb^2) = 0 \\
+-2\sum_{i=1}^{N}X_{i}+2Nb = 0 \\
+b = \frac{\sum_{i=1}^{N}X_{i}}{N}
+$$
+That is, the population mean happens to minimize the sum of squared differences.
+
+We can use simulation to verify this property of the mean.
+
+```{r}
+# Generate a lot of possible `a` values
+B <- seq(from = -2, to = 2, by = 0.0001)
+sum_squared_diff <- sapply(B, function(b) sum((X-b)^2))
+plot(B, sum_squared_diff)
+```
+
+We can see that the `b` value that minimizes the sum of squared differences is around 0, but it's hard to pinpoint its value. We can find its precise value using the simulation result.
+
+```{r}
+(b <- B[which(sum_squared_diff == min(sum_squared_diff))])
+```
+
+We can verify that the `b` value we found is indeed equal to the mean.
+
+```{r}
+all.equal(b, MU, tolerance = 0.001)
+```
+
+## Population variance
+
+Variance is the **expectation of the squared deviation** of a random variable to its mean. We can compute the variance for the population. It's also a **parameter** of the population.
+
+$$
+\sigma^2 = E[(X_i - \mu)^2]
+$$
+
+$$
+\sigma^2 = E[(X_i-E[X_i])^2] \\
+= E[X_i^2 - 2X_iE[X_i] + (E[X_i])^2]] \\
+= E[X_i^2] - 2E[X_i]E[X_i] + (E[X_i])^2 \\
+= E[X_i^2] - (E[X_i])^2 \\
+= E[X_i^2] - \mu^2
+$$
+
+We can compute the population variance according to its definition.
+
+```{r}
+VAR <- sum((X - MU)^2 * (1/N))
+```
+
+Alternatively, we can compute the population variance according to the final transformation above.
+
+```{r}
+VAR.2 <- sum(X^2 * (1/N)) - MU^2
+```
+
+We can see that `VAR` and `VAR.2` are equal.
+
+## Population vs. sample
+
+In real life, we almost never get to see the whole population, but often a sample drawn from the population.
+
+A **parameter** refers to any characteristic of a **population**. When it's not possible or practical to directly measure the value of a population parameter, statistical methods are used to infer the likely value on the basis of a **statistic** computed from a **sample** taken from the population.
+
+When a statistic is used to *estimate* a population parameter, it's called an **estimator**. We can think of the estimator as a function that maps the sample space to a set of sample estimates. For example, $f$ is a function that works on sample data $X$, and can be expressed as $f(X)$. $f$ here is the estimator and its result (which can be a point or an interval) is the estimate. We can apply the same function on many sample data sets to get many sample estimates.
+
+To discuss the properties of an estimator, we need to first establish some conventions.
+
+We usually name the fixed parameter (of a population) that needs to be estimated as $\theta$. The estimator of $\theta$ is usually denoted by the symbol $\hat{\theta}$. As discussed above, if $X$ is used to denote a random variable corresponding to the sample data, the estimator can be symbolized as a function of that random variable, $\hat{\theta}(X)$. The estimate result for a particular sample data $x$ is then $\hat{\theta}(x)$.
+
+### Error
+
+For a given sample $x$, the **error** of the estimator $\theta$ is defined as
+
+$$
+e(x) = \hat{\theta}(x) - \theta
+$$
+
+It's the difference between the estimate obtained from applying the estimator (a function) on the sample data $x$ and the true population parameter.
+
+### Mean squared error (MSE)
+
+The MSE of an estimator is defined as the **exepcted value of the squared error**.
+
+$$
+MSE(\hat{\theta}) = E[(\hat{\theta}(X)-\theta)^2]
+$$
+
+Here $X$ is a random variable corresponding to the sample space. It can be realized as observed sample data, $x_1, x_2, ..., x_n$, each represents a sample. When the estimator is applied onto all those samples, it produces a set of estimates each of which has an error against the true parameter. MSE is the expected value (or weighted average) of the square of those errors.
+
+Suppose the parameter is the bull's-eye of a target, the estimator is the process of shooting arrows at the target, and the individual arrows are estimates (samples). Then MSE is the *average* distance of the arrows from the bull's eye.
+
+### Sampling deviation
+
+For a given sample $x$, the sampling deviation of the estimator $\hat{\theta}$ is defined as
+
+$$
+d(x) = \hat{\theta}(x) - E[\hat{\theta}(X)] = \hat{\theta}(x) - E(\hat{\theta})
+$$
+
+It's the difference between an estimate and the expected value of all estimates from the estimator.
+
+### Variance
+
+The variance of $\hat{\theta}$ is simply the **expected value of the squared sampling deviations**.
+
+$$
+var(\hat{\theta}) = E[(\hat{\theta}-E(\hat{\theta}))^2]
+$$
+
+Here $\hat{\theta}$ is treated as a random variable that's the result of applying the estimator $\hat{\theta}$ on the sample space random variable.
+
+If the parameter is the bull's-eye of a target, and the arrows are estimates, then the variance measures how dispersed those arrows are from each other. *It has nothing to do with the true parameter $\theta$*. That is, if all arrows hit the same point but the point is nowhere near the bull's eye, the variance is still 0.
+
+The square root of the variance is called the **standard error* of $\hat{\theta}$. Note that the term *error* here has nothing to do with the true parameter $\theta$.
+
+### Bias
+
+The bias of $\hat{\theta}$ is defined as
+
+$$
+B(\hat{\theta}) = E(\hat{\theta}) - \theta
+$$
+
+It's the difference between the expected value of all estimates from the estimator and the true parameter. Note that the bias is not a fixed value, but a *function* of the true parameter value $\theta$.
+
+Since parameter $\theta$ is a fixed value, it's its own expected value. That is,
+
+$$
+E(\theta) = \theta
+$$
+
+We can express the bias of an esimator as the **expected value of the error**.
+
+$$
+B(\hat{\theta}) = E(\hat{\theta}) - E(\theta) = E(\hat{\theta}-\theta)
+$$
+
+If the parameter is the bull's-eye of a target, and the arrows are estimates, then the bias is the difference between the average arrow and the bull's eye.
+
+### Relationship among the quantities
+
+$$
+MSE(\hat{\theta}) = var(\hat{\theta}) + (B(\hat{\theta}))^2
+$$
+
+$$
+var(\hat{\theta}) + (B(\hat{\theta}))^2 \\
+= E[(\hat{\theta}-E(\hat{\theta}))^2] + [E(\hat{\theta}) - \theta]^2 \\
+= E[\hat{\theta}^2 - 2\hat{\theta}E(\hat{\theta}) + [E(\hat{\theta})]^2] + [E(\hat{\theta})]^2 - 2E(\hat{\theta})\theta + \theta^2 \\
+= E(\hat{\theta}^2) - 2[E(\hat{\theta})]^2] + [E(\hat{\theta})]^2 + [E(\hat{\theta})]^2 - 2E(\hat{\theta})\theta + \theta^2 \\
+= E(\hat{\theta}^2) - 2E(\hat{\theta})\theta + \theta^2 \\
+= E(\hat{\theta}^2 - 2\hat{\theta}\theta + \theta^2)
+= E[(\hat{\theta}-\theta)^2] \\
+= MSE(\hat{\theta})
+$$
+
+## Sample mean and variance
+
+As noted above, we rarely work with
+
+We can mimic this using a random sample.
+
+```{r}
+# Take a 1000-element random sample from the population
+n <- 10
+X_1 <- sample(X, n)
+```
+
+Now we can calculate the sample mean and variance.
+
+$$
+\bar{X_1} = E[X_{1i}] = \sum_{i=1}^{n}(X_{1i}p_{1i})
+$$
+
+```{r}
+# Sample mean
+X_bar_1 <- sum(X_1  * (1/n))
+```
+
+$$
+S_1^2 = E[(X_{i1} - \bar{X_{1}})^2] \\
+= \sum_{i=1}^n(X_{i1}-\bar{X_{1}})^2 \cdot p_{1i}
+$$
+
+```{r}
+# Sample variance
+S2_1 <- sum((X_1 - X_bar_1)^2 * (1/n))
+```
+
+We can repeat this process for another 99 times to get 100 samples.
+
+```{r}
+X_n <- replicate(99, sample(X, n), simplify = FALSE)
+X_n <- c(list(X_1), X_n)
+```
+
+We can calculate the sample mean and variance for each of the 100 samples.
+
+```{r}
+X_bar_n <- sapply(X_n, function(v) sum(v/n))
+S2_n <- sapply(X_n, function(v) sum((v - sum(v/n))^2)/n)
+```
+
+We can plot a histogram of the full population.
+
+```{r}
+hist(X, plot = TRUE)
+```
+
+We can also plot the QQ plot to compare the population to a normal distribution.
+
+```{r}
+qqnorm(X)
+```

@@ -10,7 +10,7 @@ Assuming there's a population. Let's first assume that the underlying distributi
 ```{r}
 set.seed(42)
 N <- 10000
-X <- rnorm(N)
+A <- rnorm(N)
 ```
 
 ## Population mean and median
@@ -18,26 +18,36 @@ X <- rnorm(N)
 Mean is the **expected value of an element** in the population. Since it's computed over a population, it's a **parameter** of the population.
 
 $$
-\mu = E[X_i] = \sum_{i=1}^{N}(X_ip_i)
+\mu = E(A_i) = \sum_{i=1}^{N}(A_ip_i)
 $$
 
-Since each element in the population has an equal probability, each of them has a `1/N` probability.
+Since each element in the population has an equal probability, each of them has a $\frac{1}{N}$ probability.
+
+$$
+p_i = \frac{1}{N}
+$$
+
+Therefore,
+
+$$
+\mu = \sum_{i=1}^{N}(\frac{A_i}{N}) = \frac{\sum_{i=1}^{N}A_i}{N}
+$$
 
 ```{r}
-MU <- sum(X * (1/N))
+(MU <- sum(A * (1/N)))
 ```
 
-Above is the textbook definition of the mean. There are also other intrepretation of what a mean is. For example, let's define the mean as the number `a` that is the *closest* to all elements in the population.
+Above is the textbook definition of the mean. There are also other intrepretation of what a mean is. For example, let's define the mean as the number $\alpha$ that is the *closest* to all elements in the population.
 
 Now the question becomes how we define the distance between a number and each element in the population. An straightforward choice is the absolute value of difference, i.e.,
 
 $$
-|X_i - a|
+|A_i - \alpha|
 $$
 We can sum the absolute differences over all elements of the population.
 
 $$
-\sum_{i=1}^{N}(|{X_i-a}|)
+\sum_{i=1}^{N}(|{A_i-\alpha}|)
 $$
 
 In the case of a discrete population, the value that minimizes the sum of absolute
@@ -46,54 +56,64 @@ differences is the **median** of the population, i.e., the *middle* element. [Th
 We can verify that it's indeed the median that minimizes the sum.
 
 ```{r}
-# Generate a lot of possible `a` values
-A <- seq(from = -2, to = 2, by = 0.0001)
-sum_abs_diff <- sapply(A, function(a) sum(abs(X-a)))
-(a <- mean(A[which(sum_abs_diff == min(sum_abs_diff))]))
+# Generate a lot of possible alpha values
+Alpha <- seq(from = -2, to = 2, by = 0.0001)
+sum_abs_diff <- sapply(Alpha, function(x) sum(abs(A-x)))
+(alpha <- mean(Alpha[which(sum_abs_diff == min(sum_abs_diff))]))
 ```
 
 ```{r}
-all.equal(median(X), a, tolerance = 0.001)
+all.equal(median(A), alpha, tolerance = 0.001)
+```
+
+```{r include=FALSE}
+rm(Alpha)
+rm(sum_abs_diff)
 ```
 
 Another way of defining the distance between two numbers is the square of their difference. Like the absolute difference, this metric is also always positive.
 
-Assume that there is a `b` value that minimizes the sum of all squared differences between `b` and the elements of the population.
+Assume that there is a $\beta$ value that minimizes the sum of all squared differences between $b$ and the elements of the population.
 
 $$
-\sum_{i=1}^{N}(X_{i}-b)^2
+\sum_{i=1}^{N}(A_{i}-\beta)^2
 $$
 
-To find the `b` value, we can set its derivative to 0.
+To find the $\beta$ value, we can set its derivative to 0.
 
 $$
-\frac{d}{db}(\sum_{i=1}^{N}(X_{i}-b)^2) = 0 \\
-\frac{d}{db}(\sum_{i=1}^{N}(X_{i}^2 - 2bX_{i} + b^2)) = 0 \\
-\frac{d}{db}(\sum_{i=1}^{N}X_{i}^2-2b\sum_{i=1}^{N}X_{i}+Nb^2) = 0 \\
--2\sum_{i=1}^{N}X_{i}+2Nb = 0 \\
-b = \frac{\sum_{i=1}^{N}X_{i}}{N}
+\frac{d}{d\beta}(\sum_{i=1}^{N}(A_{i}-\beta)^2) = 0 \\
+\frac{d}{d\beta}(\sum_{i=1}^{N}(A_{i}^2 - 2\beta \cdot X_{i} + \beta^2)) = 0 \\
+\frac{d}{d\beta}(\sum_{i=1}^{N}A_{i}^2-2\beta \cdot \sum_{i=1}^{N}A_{i}+N\beta^2) = 0 \\
+-2\sum_{i=1}^{N}A_{i}+2N\beta = 0 \\
+b = \frac{\sum_{i=1}^{N}A_{i}}{N}
 $$
-That is, the population mean happens to minimize the sum of squared differences.
+That is, **the population mean minimizes the sum of squared differences**.
 
 We can use simulation to verify this property of the mean.
 
 ```{r}
-# Generate a lot of possible `a` values
-B <- seq(from = -2, to = 2, by = 0.0001)
-sum_squared_diff <- sapply(B, function(b) sum((X-b)^2))
-plot(B, sum_squared_diff)
+# Generate a lot of possible $a$ values
+Beta <- seq(from = -2, to = 2, by = 0.0001)
+sum_squared_diff <- sapply(Beta, function(x) sum((A-x)^2))
+plot(Beta, sum_squared_diff)
 ```
 
-We can see that the `b` value that minimizes the sum of squared differences is around 0, but it's hard to pinpoint its value. We can find its precise value using the simulation result.
+We can see that the $b$ value that minimizes the sum of squared differences is around 0, but it's hard to pinpoint its value. We can find its precise value using the simulation result.
 
 ```{r}
-(b <- B[which(sum_squared_diff == min(sum_squared_diff))])
+(beta <- Beta[which(sum_squared_diff == min(sum_squared_diff))])
 ```
 
-We can verify that the `b` value we found is indeed equal to the mean.
+We can verify that the $\beta$ value we found is indeed equal to the mean.
 
 ```{r}
-all.equal(b, MU, tolerance = 0.001)
+all.equal(beta, MU, tolerance = 0.001)
+```
+
+```{r include=FALSE}
+rm(Beta)
+rm(sum_squared_diff)
 ```
 
 ## Population variance
@@ -101,38 +121,54 @@ all.equal(b, MU, tolerance = 0.001)
 Variance is the **expectation of the squared deviation** of a random variable to its mean. We can compute the variance for the population. It's also a **parameter** of the population.
 
 $$
-\sigma^2 = E[(X_i - \mu)^2]
+\sigma^2 = E[(A_i - \mu)^2]
 $$
 
 $$
-\sigma^2 = E[(X_i-E[X_i])^2] \\
-= E[X_i^2 - 2X_iE[X_i] + (E[X_i])^2]] \\
-= E[X_i^2] - 2E[X_i]E[X_i] + (E[X_i])^2 \\
-= E[X_i^2] - (E[X_i])^2 \\
-= E[X_i^2] - \mu^2
+\sigma^2 = E[(A_i-E[A_i])^2] \\
+= E[A_i^2 - 2A_iE[A_i] + (E[A_i])^2]] \\
+= E[A_i^2] - 2E[A_i]E[A_i] + (E[A_i])^2 \\
+= E[A_i^2] - (E[A_i])^2 \\
+= E[A_i^2] - \mu^2
 $$
 
 We can compute the population variance according to its definition.
 
 ```{r}
-VAR <- sum((X - MU)^2 * (1/N))
+(VAR <- sum((A - MU)^2 * (1/N)))
 ```
+
+As we noted in the section above, the mean $\mu$, defined as the expected value of $X$, minimizes the sum of squared differences. Since the population size $N$ is a fixed number, this means that the variance is the smallest expected squared difference. Using any other number to replace $\mu$ in the formula would result in a greater variance.
 
 Alternatively, we can compute the population variance according to the final transformation above.
 
 ```{r}
-VAR.2 <- sum(X^2 * (1/N)) - MU^2
+(VAR.2 <- sum(A^2 * (1/N)) - MU^2)
 ```
 
 We can see that `VAR` and `VAR.2` are equal.
 
-## Population vs. sample
+R provides a `var` function whose name might suggest that it computes the population variance. We can call it on our population $X$ to see what it outputs.
+
+```{r}
+(VAR.R <- var(A))
+```
+
+We can see that the calculated variance is greater than `VAR` and `VAR.2`. This is because by default R treats the variance as sample variance rather than population variance and it's using a slightly different formula. The reason why sample variance is calculated using a different formula is that the sample variance is a biased estimator of the population variance and needs to corrected by multiplying a scale factor $\frac{N}{N-1}$. The section below covers more generally on the topic of estimators.
+
+```{r}
+all.equal(VAR * N/(N-1), VAR.R)
+```
+
+## Population vs. sample and estimators
 
 In real life, we almost never get to see the whole population, but often a sample drawn from the population.
 
 A **parameter** refers to any characteristic of a **population**. When it's not possible or practical to directly measure the value of a population parameter, statistical methods are used to infer the likely value on the basis of a **statistic** computed from a **sample** taken from the population.
 
 When a statistic is used to *estimate* a population parameter, it's called an **estimator**. We can think of the estimator as a function that maps the sample space to a set of sample estimates. For example, $f$ is a function that works on sample data $X$, and can be expressed as $f(X)$. $f$ here is the estimator and its result (which can be a point or an interval) is the estimate. We can apply the same function on many sample data sets to get many sample estimates.
+
+### Conventions
 
 To discuss the properties of an estimator, we need to first establish some conventions.
 
@@ -225,16 +261,24 @@ var(\hat{\theta}) + (B(\hat{\theta}))^2 \\
 = MSE(\hat{\theta})
 $$
 
-## Sample mean and variance
+### Sample mean and variance as estimators of population mean and variance
 
-As noted above, we rarely work with
+As noted above, we rarely work with the whole population, but often samples drawn from the population. As a result, we often use an estimator (i.e., a function) with the sample data to *infer* population parameters. By far the most common parameters to be estimated are the mean $\mu$ and the variance $\sigma^2$.
+
+Following the circumflex notation introduced in the section above, we can call the mean and variance estimates $\hat{\mu}$ and $\hat{\sigma^2}$ respectively.
+
+$$
+\hat{\mu} = E(X_i \in A) = \frac{\sum_{i=1}^{n}(X_i)}{n}
+$$
+
+Here $X$ represents a $n$-element sample drawn from $A$.
 
 We can mimic this using a random sample.
 
 ```{r}
-# Take a 1000-element random sample from the population
+# Take one 10-element random sample from the population
 n <- 10
-X_1 <- sample(X, n)
+x <- sample(A, n)
 ```
 
 Now we can calculate the sample mean and variance.

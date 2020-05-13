@@ -1,31 +1,108 @@
 ---
 title: "Basic statistics"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
-Learning statistics
+# Probability
+
+## Probability distributions
+
+### Normal distribution {#normal_dist}
+
+#### Definitions
+
+A **normal** (or **Gaussian**) distribution is a *continuous* probability distribution.
+
+The general form of its **probability density function** is:
+
+$$
+f(x) = \frac{1}{\sigma\sqrt{2\pi}}e^{-\frac{1}{2}(\frac{x-\mu}{\sigma})^2}
+$$
+
+The parameter $\mu$ is the expected value or mean and $\sigma$ is the standard deviation. The variance of the distribution is $\sigma^2$.
+
+The normal distribution is often referred to as $N(\mu,\sigma^2)$.
+
+The simplest case of a normal distribution is known as the *standard normal distribution*. This is a special case when $\mu=0$ and $\sigma=1$. It can be described by the following probability density function.
+
+$$
+\varphi(x) = \frac{1}{\sqrt{2\pi}}e^{-\frac{1}{2}x^2}
+$$
+
+The shape of the probability density function is a symmetric (around the mean) bell curve. Its symmertry comes from the $x^2$ term. The negative sign in $-\frac{1}{2}x^2$ makes the curve greater in the middle and smallers on the sides.
+
+```{r}
+x <- seq(from = -6, to = 6, by = 0.001)
+plot(x, dnorm(x), cex = 0.25)
+```
+
+The **cumulative distribution function** of the standard normal distribution, usually denoted with the capital Greek letter $\Phi$, is the integral.
+
+$$
+\Phi(x) = \frac{1}{\sqrt{2\pi}}\int_{-\infty}^{x}e^{-t^2/2}dt
+$$
+
+```{r}
+x <- seq(from = -6, to = 6, by = 0.001)
+plot(x, pnorm(x), cex = 0.25)
+```
+
+The quantile function is the inverse of the cumulatie distribution function. The quantile function of a standard normal distribution is called the **probit** function. It's denoted as $\Phi^{-1}(x)$.
+
+```{r}
+x <- seq(from = 0, to = 1, by = 0.00001)
+plot(x, qnorm(x), cex = 0.25)
+```
+
+The quantile $\Phi^{-1}(p)$ of the standard normal distribution is commonly denoted as $z_{p}$. These values are used in hypothesis testing, construction of confidence intervals, and Q-Q plots. In particular, $Z_{0.975}=1.96$ and $Z_{0.025}=-1.96$. They are often used to construct confidence intervals of 95% significant level.
+
+#### Linear combination of two or more random variables
+
+If $X_1$ and $X_2$ are two independent standard normal random variables with mean 0 and variance 1, then
+
+1. Their sum and difference is distributed normally with mean 0 and variance 2
+
+$$
+X_1 \pm X_2 \sim N(0,2)
+$$
+
+1. If $X_1$, $X_2$, ..., $X_n$ are independent standard normal random variables, then the sum of their squares has the **chi-squared distribution** with $n$ degrees of freedom.
+
+$$
+X_1^2+...+X_n^2 \sim \chi_n^2
+$$
+
+# Statistics
 
 Assuming there's a population. Let's first assume that the underlying distribution is a normal distribution. We can simulate 10,000 such values easily.
 
 ```{r}
 set.seed(42)
 N <- 10000
-A <- rnorm(N)
+A <- rnorm(n = N, mean = 10, sd = 2)
 ```
 
-## Population mean and median
+## Population mean
 
 Mean is the **expected value of an element** in the population. Since it's computed over a population, it's a **parameter** of the population.
+
+### Interpretations
+
+There are two interpretations of the definiton.
+
+#### A single population interpretation
+
+When we have access to all elements in a population, we can compute the expected value of an element using the whole data.
 
 $$
 \mu = E(A_i) = \sum_{i=1}^{N}(A_ip_i)
 $$
 
-Since each element in the population has an equal probability, each of them has a $\frac{1}{N}$ probability.
+Here $A_i$ represents one element of the population.
 
-$$
-p_i = \frac{1}{N}
-$$
+Since each element in the population has an equal probability (or weight), each of them has a $\frac{1}{N}$ probability, namely, $p_i = \frac{1}{N}$.
 
 Therefore,
 
@@ -37,56 +114,46 @@ $$
 (MU <- sum(A * (1/N)))
 ```
 
-Above is the textbook definition of the mean. There are also other intrepretation of what a mean is. For example, let's define the mean as the number $\alpha$ that is the *closest* to all elements in the population.
+#### A random variable interpretation
 
-Now the question becomes how we define the distance between a number and each element in the population. An straightforward choice is the absolute value of difference, i.e.,
+Another interpretation is that the population mean is the expected value of an element randomly drawn from the population.
 
-$$
-|A_i - \alpha|
-$$
-We can sum the absolute differences over all elements of the population.
+Here we don't assume that we have access to the entire population, but we have a way of observing a random element of the population. This interpretation is closer to reality in which we never really see an entire population.
 
-$$
-\sum_{i=1}^{N}(|{A_i-\alpha}|)
-$$
-
-In the case of a discrete population, the value that minimizes the sum of absolute
-differences is the **median** of the population, i.e., the *middle* element. [This question exchange](https://math.stackexchange.com/questions/113270/the-median-minimizes-the-sum-of-absolute-deviations-the-l-1-norm) provides some proof for this result.
-
-We can verify that it's indeed the median that minimizes the sum.
-
-```{r}
-# Generate a lot of possible alpha values
-Alpha <- seq(from = -2, to = 2, by = 0.0001)
-sum_abs_diff <- sapply(Alpha, function(x) sum(abs(A-x)))
-(alpha <- mean(Alpha[which(sum_abs_diff == min(sum_abs_diff))]))
-```
-
-```{r}
-all.equal(median(A), alpha, tolerance = 0.001)
-```
-
-```{r include=FALSE}
-rm(Alpha)
-rm(sum_abs_diff)
-```
-
-Another way of defining the distance between two numbers is the square of their difference. Like the absolute difference, this metric is also always positive.
-
-Assume that there is a $\beta$ value that minimizes the sum of all squared differences between $b$ and the elements of the population.
+Under this interpretation, we actually can't compute the exact value of $\mu$ as we don't have coverage of all elements in the population (we actually don't even know the size of the population). Instead, the population mean $\mu$ is simply defined as the expected value of a randonly drawn element of the population.
 
 $$
-\sum_{i=1}^{N}(A_{i}-\beta)^2
+\mu = E(X \in A)
 $$
 
-To find the $\beta$ value, we can set its derivative to 0.
+Here $X$ represents a random variable that corresponds to an element of the population. We can repeat the observation process many times and each time it would give us one realization of the random variable $X$ as $X_i$. $\mu$ is the expected value of all those $X_i$ values.
+
+#### Squared-differences-minimizing property
+
+Besides being the expected value of an element in the population, the population mean actually has an interesting property whereby it minimizes the sum of squared differences.
+
+Assume that there's a function $SSD$ that takes a value and computes the sum of squared differences between each element of the population and that supplied value.
 
 $$
-\frac{d}{d\beta}(\sum_{i=1}^{N}(A_{i}-\beta)^2) = 0 \\
-\frac{d}{d\beta}(\sum_{i=1}^{N}(A_{i}^2 - 2\beta \cdot X_{i} + \beta^2)) = 0 \\
-\frac{d}{d\beta}(\sum_{i=1}^{N}A_{i}^2-2\beta \cdot \sum_{i=1}^{N}A_{i}+N\beta^2) = 0 \\
--2\sum_{i=1}^{N}A_{i}+2N\beta = 0 \\
-b = \frac{\sum_{i=1}^{N}A_{i}}{N}
+SSD(x) = \sum_{i=1}^{N}(A_i - x)^2
+$$
+
+The populatio mean's squared-differences-minimizing property means
+
+$$
+SSD(\mu) <= SSD(\text{any number})
+$$
+
+To find the value that minimizes the sum of squared differences, we can set the derivatie of $SSD(x)$ to 0 and solve for $x$.
+
+$$
+\begin{aligned}
+&\frac{d}{dx}(\sum_{i=1}^{N}(A_{i}-x)^2) = 0 \\
+&\frac{d}{dx}(\sum_{i=1}^{N}(A_{i}^2 - 2x \cdot A_{i} + x^2)) = 0 \\
+&\frac{d}{dx}(\sum_{i=1}^{N}A_{i}^2-2x \cdot \sum_{i=1}^{N}A_{i}+Nx^2) = 0 \\
+&-2\sum_{i=1}^{N}A_{i}+2Nx = 0 \\
+&x = \frac{\sum_{i=1}^{N}A_{i}}{N}
+\end{aligned}
 $$
 That is, **the population mean minimizes the sum of squared differences**.
 
@@ -94,26 +161,60 @@ We can use simulation to verify this property of the mean.
 
 ```{r}
 # Generate a lot of possible $a$ values
-Beta <- seq(from = -2, to = 2, by = 0.0001)
-sum_squared_diff <- sapply(Beta, function(x) sum((A-x)^2))
-plot(Beta, sum_squared_diff)
+X <- seq(from = 8, to = 12, by = 0.0001)
+sum_squared_diff <- sapply(X, function(x) sum((A-x)^2))
+plot(X, sum_squared_diff, cex = 0.25)
 ```
 
-We can see that the $b$ value that minimizes the sum of squared differences is around 0, but it's hard to pinpoint its value. We can find its precise value using the simulation result.
+We can see that the $x$ value that minimizes the sum of squared differences is around 10, but it's hard to pinpoint its value. We can find its precise value using the simulation result.
 
 ```{r}
-(beta <- Beta[which(sum_squared_diff == min(sum_squared_diff))])
+(x <- X[which(sum_squared_diff == min(sum_squared_diff))])
 ```
 
-We can verify that the $\beta$ value we found is indeed equal to the mean.
+We can verify that the $x$ value we found is indeed equal to the mean.
 
 ```{r}
-all.equal(beta, MU, tolerance = 0.001)
+all.equal(x, MU, tolerance = 0.001)
 ```
 
 ```{r include=FALSE}
-rm(Beta)
+rm(X)
 rm(sum_squared_diff)
+```
+
+##### Median's minimizing property
+
+While the sum of squared differences is a common way of measuring the total distances between a set of numbers and a value, a more straightforward choice is the absolute value of difference, i.e.
+
+$$
+|A_i - x|
+$$
+We can also sum the absolute differences over all elements of the population.
+
+$$
+\sum_{i=1}^{N}(|{A_i-x}|)
+$$
+
+In the case of a discrete population, the value that minimizes the sum of absolute
+differences is actually the **median** of the population, i.e., the *middle* element. [This question exchange](https://math.stackexchange.com/questions/113270/the-median-minimizes-the-sum-of-absolute-deviations-the-l-1-norm) provides some proof for this result.
+
+We can verify that it's indeed the median that minimizes the sum.
+
+```{r}
+# Generate a lot of possible alpha values
+X <- seq(from = 8, to = 12, by = 0.0001)
+sum_abs_diff <- sapply(X, function(x) sum(abs(A-x)))
+(x <- mean(X[which(sum_abs_diff == min(sum_abs_diff))]))
+```
+
+```{r}
+all.equal(median(A), x, tolerance = 0.001)
+```
+
+```{r include=FALSE}
+rm(X)
+rm(sum_abs_diff)
 ```
 
 ## Population variance
@@ -125,11 +226,13 @@ $$
 $$
 
 $$
-\sigma^2 = E[(A_i-E[A_i])^2] \\
-= E[A_i^2 - 2A_iE[A_i] + (E[A_i])^2]] \\
-= E[A_i^2] - 2E[A_i]E[A_i] + (E[A_i])^2 \\
-= E[A_i^2] - (E[A_i])^2 \\
-= E[A_i^2] - \mu^2
+\begin{aligned}
+\sigma^2 &= E[(A_i-E[A_i])^2] \\
+&= E[A_i^2 - 2A_iE[A_i] + (E[A_i])^2]] \\
+&= E[A_i^2] - 2E[A_i]E[A_i] + (E[A_i])^2 \\
+&= E[A_i^2] - (E[A_i])^2 \\
+&= E[A_i^2] - \mu^2
+\end{aligned}
 $$
 
 We can compute the population variance according to its definition.
@@ -250,15 +353,18 @@ $$
 MSE(\hat{\theta}) = var(\hat{\theta}) + (B(\hat{\theta}))^2
 $$
 
+#### Proof
+
 $$
-var(\hat{\theta}) + (B(\hat{\theta}))^2 \\
-= E[(\hat{\theta}-E(\hat{\theta}))^2] + [E(\hat{\theta}) - \theta]^2 \\
-= E[\hat{\theta}^2 - 2\hat{\theta}E(\hat{\theta}) + [E(\hat{\theta})]^2] + [E(\hat{\theta})]^2 - 2E(\hat{\theta})\theta + \theta^2 \\
-= E(\hat{\theta}^2) - 2[E(\hat{\theta})]^2] + [E(\hat{\theta})]^2 + [E(\hat{\theta})]^2 - 2E(\hat{\theta})\theta + \theta^2 \\
-= E(\hat{\theta}^2) - 2E(\hat{\theta})\theta + \theta^2 \\
-= E(\hat{\theta}^2 - 2\hat{\theta}\theta + \theta^2)
-= E[(\hat{\theta}-\theta)^2] \\
-= MSE(\hat{\theta})
+\begin{aligned}
+var(\hat{\theta}) + (B(\hat{\theta}))^2 &= E[(\hat{\theta}-E(\hat{\theta}))^2] + [E(\hat{\theta}) - \theta]^2 \\
+&= E[\hat{\theta}^2 - 2\hat{\theta}E(\hat{\theta}) + [E(\hat{\theta})]^2] + [E(\hat{\theta})]^2 - 2E(\hat{\theta})\theta + \theta^2 \\
+&= E(\hat{\theta}^2) - 2[E(\hat{\theta})]^2] + [E(\hat{\theta})]^2 + [E(\hat{\theta})]^2 - 2E(\hat{\theta})\theta + \theta^2 \\
+&= E(\hat{\theta}^2) - 2E(\hat{\theta})\theta + \theta^2 \\
+&= E(\hat{\theta}^2 - 2\hat{\theta}\theta + \theta^2) \\
+&= E[(\hat{\theta}-\theta)^2] \\
+&= MSE(\hat{\theta})
+\end{aligned}
 $$
 
 ### Sample mean and variance as estimators of population mean and variance
@@ -267,63 +373,275 @@ As noted above, we rarely work with the whole population, but often samples draw
 
 Following the circumflex notation introduced in the section above, we can call the mean and variance estimates $\hat{\mu}$ and $\hat{\sigma^2}$ respectively.
 
+#### Sample mean
+
 $$
 \hat{\mu} = E(X_i \in A) = \frac{\sum_{i=1}^{n}(X_i)}{n}
 $$
 
-Here $X$ represents a $n$-element sample drawn from $A$.
+Here $X$ represents an $n$-element sample drawn from $A$.
 
-We can mimic this using a random sample.
+##### Bias
+
+To see if the sample mean is an unbiased estimator of the population, we need to work out the expected value of $\hat{\mu}$.
+
+$$
+E(\hat{\mu}) = \frac{1}{n}E(\sum_{i=1}^{n}X_i)
+$$
+
+###### Proof 1
+
+Using the linear operator property of expectation, we get
+
+$$
+\begin{aligned}
+E(\hat{\mu}) &= \frac{1}{n}E(\sum_{i=1}^{n}X_i) \\
+&= \frac{1}{n}\sum_{i=1}^{n}E(X_i) \\
+&= \frac{1}{n}\sum_{i=1}^{n}\mu \\
+&= \frac{1}{n} \cdot n \cdot \mu \\
+&= \mu
+\end{aligned}
+$$
+
+The important understanding here is that $E(X_i) = \mu$ because $X_i$ is randomly drawn from the population. We can think of the expectation operator $E$ here as taking an element of the population out at a time but for many many times.
+
+###### Proof 2
+
+There's also an alternative way of proving that sample mean estimator is an unbiased esimator of the population mean. But this proof has its limitations.
+
+Under the assumption that $X_i$ is randomly drawn (**without replacement**) from the population $A$, we can transform the sum of sample elements to the sum of product of population elements and a probability term.
+
+$$
+\sum_{i=1}^{n}X_i = \sum_{i=1}^{N}A_iZ_i
+$$
+
+In the formula above, $Z_i$ is a binary random variable of 0 or 1. It indicates if a particular population element $A_i$ is excluded or included in the sample $X$. We can think of $Z$ as a binary switch that randomly decide which population units to be drawn into the sample. This line of reasoning breaks down when the sampling is done with replacement since it's equivalent to $Z_i$ being a binary switch.
+
+To compute the overall expected value, we need to figure out the probablity of $Z_i$ equal to 1, namely $Pr(Z_i = 1)$. Note that the probability of $Z_i$ equal to 0 is simply the complement, namely, $Pr(Z_i = 0) = 1 - Pr(Z_i = 1)$, because $Z_i$ can only take a value of 0 or 1.
+
+The probability $Pr(Z_i = 1)$ is a fraction. The numerator is the total number of ways element $A_i$ is included in the $n$-element sample. The denominator is the total number of ways an $n$-element sample can be drawn from the $N$-element population.
+
+In total, there are $\binom{N}{n}$ ways of drawing a sample (without replacement) of size $n$ from a population of size $N$.
+
+The trick to compute the numerator is to look at the remaining $n-1$ elements in the sample of which $A_i$ is already included. There are in total $\binom{N-1}{n-1}$ ways to draw $n-1$ elements from $N-1$ elements in the population.
+
+Therefore,
+
+$$
+Pr(Z_i = 1) = \frac{\binom{N-1}{n-1}}{\binom{N}{n}} = \frac{\frac{(N-1)!}{(n-1)!(N-n)!}}{\frac{N!}{n!(N-n)!}} = \frac{\frac{(N-1)!}{(n-1)!}}{\frac{N!}{n!}} = \frac{\frac{(N-1)!}{(n-1)!}}{\frac{N(N-1)!}{n(n-1)!}} = \frac{n}{N}
+$$
+This makes intuitive sense. When $n=1$, $Pr(Z_i = 1) = \frac{1}{N}$ because the probability of an elment $A_i$ is drawn from the population is the same as the probability of any other element in the population (this is the definition of a random sample), so it's $\frac{1}{N}$. On the other hand, when $n=N$, $Pr(Z_i = 1) = 1$ because such a sample is simply the entire population and because it's sampling without replacement, every element $A_i$ is bound to be included.
+
+Now we can return to derive the expected value of $\hat{\mu}$.
+
+$$
+\begin{aligned}
+E(\hat{\mu}) &= \frac{1}{n}E(\sum_{i=1}^{n}X_i) \\
+&= \frac{1}{n}E(\sum_{i=1}^{N}A_iZ_i) \\
+&= \frac{1}{n}\sum_{i=1}^{N}(A_i \cdot 1 \cdot Pr(Z_i = 1) + A_i \cdot 0 \cdot Pr(Z_i = 0)) \\
+&= \frac{1}{n}\sum_{i=1}^{N}A_iPr(Z_i = 1) \\
+&= \frac{1}{n}\sum_{i=1}^{N}A_i\frac{n}{N} \\
+&= \sum_{i=1}^{N}\frac{A_i}{N} \\
+&= \mu
+\end{aligned}
+$$
+
+So the sample mean is an **unbiased estimator** of the population mean.
+
+###### Variance of the sample mean estimator
+
+So far we've established that the expected value (or mean) of the sample mean estimates is the population mean. How about the variance of the sample mean estimates? Recall that here we treat sample means from many $n$-element sample as a random varianble by itself. Every time we draw a different $n$-element sample, we get a differnet sample mean estimates and the collection of many sample mean estimates form the distribution of the random variable.
+
+$$
+\begin{aligned}
+Var(\hat{\mu}) &= Var(\frac{\sum_{i=1}^{n}X_i}{n}) \\
+&=\frac{1}{n^2}\sum_{i=1}^{n}Var(X_i) \\
+&=\frac{1}{n^2} \cdot n \cdot \sigma^2 \\
+&=\frac{1}{n}\sigma^2
+\end{aligned}
+$$
+
+That is, the variance of the sample mean estimator is related to the population variance. This makes intuitive sense. If the population is very dispersed, sample means produced from many random samples from the population should tend to be dispersed too. We can also look at extreme cases of $n$ to get some intuition.
+
+###### Simulation
+
+We can verify this property by taking many samples (without replacement) from the population.
 
 ```{r}
-# Take one 10-element random sample from the population
+# Sample size
 n <- 10
-x <- sample(A, n)
+set.seed(42)
+# A list of 10-element random samples
+X <- replicate(5000, sample(A, n, replace = TRUE), simplify = FALSE)
 ```
 
-Now we can calculate the sample mean and variance.
+We can compute the means of cumulative samples (which is equivalent to taking average of the means of the samples) to see whether it approaches the population mean.
+
+```{r}
+X_mean <- vector("double", length(X))
+X_avg_mean <- vector("double", length(X))
+X_mean_var <- vector("double", length(X))
+for (i in seq_along(X)) {
+  X_mean[i] <- mean(X[[i]])
+  X_avg_mean[i] <- mean(X_mean[1:i])
+  X_mean_var[i] <- var(X_mean[1:i])
+}
+{
+  plot(X_avg_mean, cex = 0.25)
+  abline(h = MU, col = "red")
+}
+```
+
+After 1,000 samples, the cumulative mean indeed approaches the population mean and fluctuates very slightly around it afterwards.
+
+We can also show the distribution of individual sample means.
+
+```{r}
+{
+  plot(density(X_mean))
+  abline(v = MU, col = "red")
+}
+```
+
+The variance of the sample mean estimates is indeed very close to $\frac{1}{n}$ of the population variance.
+
+```{r}
+{
+  plot(X_mean_var, cex = 0.25)
+  abline(h = VAR/n, col = "red")
+}
+```
+
+#### Sample variance
+
+We can now turn our attention to the sample variance $\hat{\sigma^2}$.
+
+##### Formula and bias
+
+It's natural that we try to mimic the population variance formula here to calculate the sample variance. Since the population mean $\mu$ is unknown to us, we replace it with the sample mean $\hat{\mu}$.
 
 $$
-\bar{X_1} = E[X_{1i}] = \sum_{i=1}^{n}(X_{1i}p_{1i})
+\begin{aligned}
+\hat{\sigma^2} &= E[(X_i-\hat{\mu})^2] \\
+&= \frac{\sum_{i=1}^{n}(X_i-\hat{\mu})^2}{n}
+\end{aligned}
 $$
 
-```{r}
-# Sample mean
-X_bar_1 <- sum(X_1  * (1/n))
-```
+Like the sample mean formula, here $X$ represents one $n$-element sample randomly drawn from the population.
+
+Now we want to figure out if the sample variance estimator is biased or not. Namely, we want to verify if the following equality holds.
 
 $$
-S_1^2 = E[(X_{i1} - \bar{X_{1}})^2] \\
-= \sum_{i=1}^n(X_{i1}-\bar{X_{1}})^2 \cdot p_{1i}
+E(\hat{\sigma^2}) = \sigma^2
 $$
 
+We can start by expanding the formula.
+
+$$
+\begin{aligned}
+E[\hat{\sigma^2}] &= E[\frac{1}{n}\sum_{i=1}^{n}(X_i-\hat{\mu})^2] &(1)\\
+&= E[\frac{1}{n}\sum_{i=1}^{n}[(X_i-\mu)-(\hat{\mu}-\mu)]^2] &(2)\\
+&= E[\frac{1}{n}\sum_{i=1}^{n}[(X_i-\mu)^2 - 2(X_i-\mu)(\hat{\mu}-\mu) + (\hat{\mu}-\mu)^2]] &(3)\\
+&= E[\frac{1}{n}\sum_{i=1}^{n}(X_i-\mu)^2] - E[\frac{2}{n}\sum_{i=1}^{n}(X_i-\mu)(\hat{\mu}-\mu)] + E[\frac{1}{n}\sum_{i=1}^{n}(\hat{\mu}-\mu)^2] &(4)
+\end{aligned}
+$$
+
+The reason why we subtract $\mu$ from both $X_i$ and $\hat{\mu}$ in equation (1) is that we're trying to establish some relationship between $E[\hat{\sigma^2}]$ and $\sigma^2$. We know that population variance is computed using the population mean $\mu$.
+
+$$
+\begin{aligned}
+E[\frac{1}{n}\sum_{i=1}^{n}(X_i-\mu)^2] &= \frac{1}{n} \cdot n \cdot E[(X_i-\mu)^2] \\
+&= E[(X_i-\mu)^2] \\
+&= \sigma^2
+\end{aligned}
+$$
+
+Another interesting term in equaltion (4) above is the last term $E[\sum_{i=1}^{n}(\hat{\mu}-\mu)^2]$. This is basically the variance of the sample mean estimator, namely $Var(\hat{\mu})$.
+
+$$
+E[\frac{1}{n}\sum_{i=1}^{n}(\hat{\mu}-\mu)^2] = Var(\hat{\mu}) = \frac{1}{n}\sigma^2
+$$
+Now that we've linked the first and the third term in equation (4) to the population variance, the only term left is the second term, $E[\frac{2}{n}\sum_{i=1}^{n}(X_i-\mu)(\hat{\mu}-\mu)]$.
+
+$$
+\begin{aligned}
+E[\frac{2}{n}\sum_{i=1}^{n}(X_i-\mu)(\hat{\mu}-\mu)] &= E[\frac{2}{n}(\hat{\mu}-\mu)\sum_{i=1}^{n}(X_i-\mu)] &(1) \\
+&=E[\frac{2}{n}(\hat{\mu}-\mu)(\sum_{i=1}^{n}X_i-\sum_{i=1}^{n}\mu)] &(2) \\
+&=E[\frac{2}{n}(\hat{\mu}-\mu)(n \cdot \hat{\mu} - n \cdot \mu)] &(3) \\
+&=2E[(\hat{\mu}-\mu)^2] &(4) \\
+&=2Var(\hat{\mu}) &(5) \\
+&=\frac{2}{n}\sigma^2 &(6)
+\end{aligned}
+$$
+
+Now we can combine the 3 terms together.
+
+$$
+\begin{aligned}
+E[\hat{\sigma^2}] &= \sigma^2 - \frac{2}{n}\sigma^2 + \frac{1}{n}\sigma^2 \\
+&= \sigma^2 - \frac{1}{n}\sigma^2 \\
+&= (1-\frac{1}{n})\sigma^2
+\end{aligned}
+$$
+
+We can also express the equation in another form to give a bit more intuition.
+
+$$
+E[\hat{\sigma^2}] - \sigma^2 = -Var(\hat{\mu})
+$$
+
+That is, the sample variance estimator has a negative bias of $-Var(\hat{\mu})$. We can correct this bias using a scalar term $\frac{n}{n-1}$.
+
+$$
+E[\frac{n}{n-1} \cdot \hat{\sigma^2}] = \frac{n}{n-1} \cdot \frac{n-1}{n} \cdot \sigma^2 = \sigma^2
+$$
+
+Since
+
+$$
+\hat{\sigma^2} = \frac{\sum_{i=1}^{n}(X_i-\hat{\mu})^2}{n}
+$$
+
+We have
+
+$$
+\begin{aligned}
+\frac{n}{n-1} \cdot \hat{\sigma^2} &= \frac{n}{n-1} \cdot \frac{\sum_{i=1}^{n}(X_i-\hat{\mu})^2}{n} \\
+&=\frac{\sum_{i=1}^{n}(X_i-\hat{\mu})^2}{n-1}
+\end{aligned}
+$$
+
+We usually denote the formula above as $\hat{s^2}$ to differentiate it from $\sigma^2$. We've shown above that $\hat{s^2}$ is an unbiased estimator of the population variance.
+
+##### Simulation
+
 ```{r}
-# Sample variance
-S2_1 <- sum((X_1 - X_bar_1)^2 * (1/n))
+X_var1 <- vector("double", length(X))
+X_avg_var1 <- vector("double", length(X))
+X_var2 <- vector("double", length(X))
+X_avg_var2 <- vector("double", length(X))
+for (i in seq_along(X)) {
+  X_var1[i] <- sum((X[[i]] - mean(X[[i]]))^2)/length(X[[i]])
+  X_var2[i] <- var(X[[i]])
+  X_avg_var1[i] <- mean(X_var1[1:i])
+  X_avg_var2[i] <- mean(X_var2[1:i])
+}
+{
+  plot(X_avg_var1, cex = 0.25)
+  points(X_avg_var2, cex = 0.25, col = "blue")
+  abline(h = VAR, col = "red")
+}
 ```
 
-We can repeat this process for another 99 times to get 100 samples.
+The difference between the black line (i.e., $\sigma^2$) and the blue line (i.e., $s^2$) is the bias of the naive sample variance estimator. To be more pricise, it's the bias manifested in this particular simulation case.
+
+##### Variance of sample variance distribution
+
+We can also use the simulation data to show the sample variances' distribution.
 
 ```{r}
-X_n <- replicate(99, sample(X, n), simplify = FALSE)
-X_n <- c(list(X_1), X_n)
-```
-
-We can calculate the sample mean and variance for each of the 100 samples.
-
-```{r}
-X_bar_n <- sapply(X_n, function(v) sum(v/n))
-S2_n <- sapply(X_n, function(v) sum((v - sum(v/n))^2)/n)
-```
-
-We can plot a histogram of the full population.
-
-```{r}
-hist(X, plot = TRUE)
-```
-
-We can also plot the QQ plot to compare the population to a normal distribution.
-
-```{r}
-qqnorm(X)
+{
+  plot(density(X_var2))
+  abline(v = VAR, col = "red")
+}
 ```

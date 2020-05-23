@@ -2,7 +2,11 @@
 title: "Basic statistics"
 output:
   html_document:
+    toc: true
+    toc_depth: 5
+    toc_float: true
     df_print: paged
+  pdf_document: default
 ---
 
 # Probability
@@ -263,7 +267,7 @@ We can see that the calculated variance is greater than `VAR` and `VAR.2`. This 
 all.equal(VAR * N/(N-1), VAR.R)
 ```
 
-## Population vs. sample and estimators
+## Estimators
 
 In real life, we almost never get to see the whole population, but often a sample drawn from the population.
 
@@ -367,13 +371,13 @@ var(\hat{\theta}) + (B(\hat{\theta}))^2 &= E[(\hat{\theta}-E(\hat{\theta}))^2] +
 \end{aligned}
 $$
 
-### Sample mean and variance as estimators of population mean and variance
+## Sample mean and variance
 
 As noted above, we rarely work with the whole population, but often samples drawn from the population. As a result, we often use an estimator (i.e., a function) with the sample data to *infer* population parameters. By far the most common parameters to be estimated are the mean $\mu$ and the variance $\sigma^2$.
 
 Following the circumflex notation introduced in the section above, we can call the mean and variance estimates $\hat{\mu}$ and $\hat{\sigma^2}$ respectively.
 
-#### Sample mean
+### Sample mean
 
 $$
 \hat{\mu} = E(X_i \in A) = \frac{\sum_{i=1}^{n}(X_i)}{n}
@@ -381,7 +385,7 @@ $$
 
 Here $X$ represents an $n$-element sample drawn from $A$.
 
-##### Bias
+#### Bias
 
 To see if the sample mean is an unbiased estimator of the population, we need to work out the expected value of $\hat{\mu}$.
 
@@ -389,7 +393,7 @@ $$
 E(\hat{\mu}) = \frac{1}{n}E(\sum_{i=1}^{n}X_i)
 $$
 
-###### Proof 1
+##### Proof 1
 
 Using the linear operator property of expectation, we get
 
@@ -405,7 +409,7 @@ $$
 
 The important understanding here is that $E(X_i) = \mu$ because $X_i$ is randomly drawn from the population. We can think of the expectation operator $E$ here as taking an element of the population out at a time but for many many times.
 
-###### Proof 2
+##### Proof 2
 
 There's also an alternative way of proving that sample mean estimator is an unbiased esimator of the population mean. But this proof has its limitations.
 
@@ -448,7 +452,7 @@ $$
 
 So the sample mean is an **unbiased estimator** of the population mean.
 
-###### Variance of the sample mean estimator
+##### Variance of the sample mean estimator
 
 So far we've established that the expected value (or mean) of the sample mean estimates is the population mean. How about the variance of the sample mean estimates? Recall that here we treat sample means from many $n$-element sample as a random varianble by itself. Every time we draw a different $n$-element sample, we get a differnet sample mean estimates and the collection of many sample mean estimates form the distribution of the random variable.
 
@@ -461,9 +465,9 @@ Var(\hat{\mu}) &= Var(\frac{\sum_{i=1}^{n}X_i}{n}) \\
 \end{aligned}
 $$
 
-That is, the variance of the sample mean estimator is related to the population variance. This makes intuitive sense. If the population is very dispersed, sample means produced from many random samples from the population should tend to be dispersed too. We can also look at extreme cases of $n$ to get some intuition.
+That is, the variance of the sample mean estimator is related to the population variance. This makes intuitive sense. If the population is very dispersed, sample means produced from many random samples from the population should tend to be dispersed too.
 
-###### Simulation
+##### Simulation
 
 We can verify this property by taking many samples (without replacement) from the population.
 
@@ -512,11 +516,11 @@ The variance of the sample mean estimates is indeed very close to $\frac{1}{n}$ 
 }
 ```
 
-#### Sample variance
+### Sample variance
 
 We can now turn our attention to the sample variance $\hat{\sigma^2}$.
 
-##### Formula and bias
+#### Formula and bias
 
 It's natural that we try to mimic the population variance formula here to calculate the sample variance. Since the population mean $\mu$ is unknown to us, we replace it with the sample mean $\hat{\mu}$.
 
@@ -613,7 +617,7 @@ $$
 
 We usually denote the formula above as $\hat{s^2}$ to differentiate it from $\sigma^2$. We've shown above that $\hat{s^2}$ is an unbiased estimator of the population variance.
 
-##### Simulation
+#### Simulation
 
 ```{r}
 X_var1 <- vector("double", length(X))
@@ -635,7 +639,7 @@ for (i in seq_along(X)) {
 
 The difference between the black line (i.e., $\sigma^2$) and the blue line (i.e., $s^2$) is the bias of the naive sample variance estimator. To be more pricise, it's the bias manifested in this particular simulation case.
 
-##### Variance of sample variance distribution
+#### Variance of sample variance distribution
 
 We can also use the simulation data to show the sample variances' distribution.
 
@@ -645,3 +649,326 @@ We can also use the simulation data to show the sample variances' distribution.
   abline(v = VAR, col = "red")
 }
 ```
+
+## Resampling
+
+So far when we talk about the expected value of a sample statistic (e.g., sample mean), we imagine that we take many $n$-element random samples from the same population (as we did in simulations above) and form a sample statistic distribution (effectively treating the sample statistic as a random variable).
+
+What if we only have one sample, can we derive some sensible estimator of a population parameter using this one sample?
+
+[Resampling](https://en.wikipedia.org/wiki/Resampling_(statistics)) is a set of techniques that can help us here.
+
+### Jackknife resampling
+
+Jackknife is often used in statistical inference to estimate the *bias* and *standard error* of a statistic. The core idea of jackknife is to systematically leave out $k$ (usually $k=1$) observations from the sample to construct $n$ number of $(n-1)$-element subsamples. Each subsample is then used to compute the statistic and the collection of the $n$ statistics are used to compute the overall statistic estimate and the standard error of that estimate (and we can construct the confidence interval).
+
+#### Jackknife sample mean estimator
+
+Let's take sample mean as an example.
+
+Recall when we define the sample mean estimator, we use the following formula.
+
+$$
+\hat{\mu} = E(X_i \in A) = \frac{\sum_{i=1}^{n}(X_i)}{n}
+$$
+
+Here $X$ is an $n$-element random sample from the population $A$. We show in theory and simulation that if we repeat the process of drawing $n$-element samples from $A$ many (let's say $m$) times, we end up with many (in this case $m$) samples (each of them has $n$ elements). Each sample can be used to compute a sample mean and those $m$ sample means form a sample mean distribution. The expected value of the distribution mean is an unbiased estimator of the population mean.
+
+Let's say that we don't have the luxury of drawing $m$ $n$-element random samples from $A$. We only have one sample $X$. We can somewhat mimic the process above by creating many subsamples from this one sample. The way to do it is to leave one element out each time. That is, the $i$-th subsample from the one sample $X$ is defined as the set
+
+$$
+\textbf{X}_{(i)} = \{ X_1, X_2, ..., X_{i-1}, X_{i+1}, ..., X_{n-1}, X_n \}
+$$
+
+Note how the $X_i$ element is left out in this subsample above. So the subsample has $n-1$ elements.
+
+For each subsample, we can compute the subsample mean.
+
+$$
+\bar{x}_{(i)} = \frac{1}{n-1}\sum_{j=1,j \neq i}^{n}X_j
+$$
+
+Repeating this process for $i=1...n$, we will end up with $n$ $\bar{x}_{(i)}$ subsample means. We can then define an overall sample mean jackknife estimator as
+
+$$
+\hat{\mu}_{jack} = \frac{1}{n}\sum_{i=1}^{n}\bar{x}_{(i)}
+$$
+
+It's straightforward to show that $\hat{\mu}_{jack} = \hat{\mu} = \frac{1}{n}\sum_{i=1}^{n}(X_i)$.
+
+$$
+\begin{aligned}
+\hat{\mu}_{jack} &= \frac{1}{n} \sum_{i=1}^{n} \bar{x}_{(i)} \\
+&= \frac{1}{n} \sum_{i=1}^{n} (\frac{1}{n-1} \sum_{j=1,j \neq i}^{n} X_j) \\
+&= \frac{1}{n} \cdot \frac{1}{n-1} \cdot (n-1) \sum_{i=1}^{n} X_i \\
+&= \frac{1}{n} \sum_{i=1}^{n} X_i \\
+&= \hat{\mu}
+\end{aligned}
+$$
+
+Since $\hat{\mu}$ is an unbiased estimator of the population mean, the Jackknife sample mean estimator is also an unbiased estimator of the populatio mean. In fact, $\hat{\mu}_{jackknife}$ is exactly the same as $\hat{\mu}$. It's just a different way of computing the same estimate.
+
+#### Jackknife estimate of the sample mean variance
+
+We know that the Jackknife sample mean estimate is an unbiased one. It might seem that Jackknife is a convoluted way of computing the sample mean estimate that we can get from directly computing the sample mean (i.e., rather than taking the mean of the $n$ subsample means, we can simply take the mean of the entire sample and they are equivalent). The benefit of the Jackknife technique comes in when we use the $n$ subsamples to estimate the variance of the sample mean estimate.
+
+We know that the variance of a sample mean estimate is $\frac{1}{n}$ of the population variance.
+
+$$
+Var(\hat{\mu}) = \frac{1}{n} \sigma^2
+$$
+
+We can't observe the population variable directly. We know that $s^2$ is an unbiased estimator of the population variance $\sigma^2$, so we use the sample $X$ variance.
+
+$$
+s^2 = \frac{1}{n-1} \sum_{i=1}^{n} (X_i - \hat{\mu})^2
+$$
+
+Hence,
+
+$$
+\begin{aligned}
+\hat{Var}(\hat{\mu}) &= \frac{1}{n} s^2 \\
+&= \frac{1}{n(n-1)} \sum_{i=1}^{n} (X_i - \hat{\mu})^2
+\end{aligned}
+$$
+This $\hat{Var}(\hat{\mu})$ is an unbiased **estimate** (hence the hat) of the variance of the sample mean $\hat{\mu}$.
+
+The Jackknife estimate of the sample variance is given as
+
+$$
+\hat{Var}(\hat{\mu}_{jack}) = \frac{n-1}{n} \sum_{i=1}^{n} (\bar{x}_{(i)} - \hat{\mu}_{jack})^2
+$$
+
+Here $\hat{\mu}_{jack} = \frac{1}{n} \sum_{i=1}^{n} \bar{x}_{(i)}$, that is, the average of the subsample means.
+
+The proof of this formula is beyond the scope of basic statistics here. But we can show that for the sample mean estimator case, the Jackknife formula is equivalent to the estimator $\hat{\mu}_{jack} = \frac{1}{n} \sum_{i=1}^{n} \bar{x}_{(i)}$ we just derived.
+
+The key here is to transform $\bar{x}_{(i)} - \hat{\mu}_{jack}$ into some form of $X_i - \hat{\mu}$.
+
+$$
+\begin{aligned}
+\bar{x}_{(i)} - \hat{\mu}_{jack} &= \frac{n \cdot \hat{\mu}_{jack} - X_i}{n-1} - \hat{\mu}_{jack} &(1) \\
+&= \frac{n}{n-1} \hat{\mu}_{jack} - \frac{1}{n-1} X_i - \hat{\mu}_{jack} &(2) \\
+&= (\frac{n}{n-1} - 1) \hat{\mu}_{jack} - \frac{1}{n-1} X_i &(3) \\
+&= \frac{1}{n-1} \hat{\mu}_{jack} - \frac{1}{n-1} X_i &(4) \\
+&= \frac{1}{n-1} (\hat{\mu}_{jack} - X_i) &(5)
+\end{aligned}
+$$
+
+The transformation step (1) is just using the definition of $\bar{x}_{(i)}$ and the rest is straightforward algebra.
+
+Now we can substite $\bar{x}_{(i)} - \hat{\mu}_{jack}$ in the formula.
+
+$$
+\begin{aligned}
+\hat{Var}(\hat{\mu}_{jack}) &= \frac{n-1}{n} \sum_{i=1}^{n} (\bar{x}_{(i)} - \hat{\mu}_{jack})^2 \\
+&= \frac{n-1}{n} \sum_{i=1}^{n} (\frac{1}{n-1} (\hat{\mu}_{jack} - X_i))^2 \\
+&= \frac{n-1}{n} \cdot \frac{1}{(n-1)^2} \sum_{i=1}^{n} (X_i - \hat{\mu}_{jack})^2 \\
+&= \frac{1}{n(n-1)} \sum_{i=1}^{n} (X_i - \hat{\mu}_{jack})^2
+\end{aligned}
+$$
+
+We've shown the formula $\hat{Var}(\hat{\mu}_{jack}) = \frac{n-1}{n} \sum_{i=1}^{n} (\bar{x}_{(i)} - \hat{\mu}_{jack})^2$ can be applied on the sample mean estimator to estimate its variance. The same formula actually can be used to estimate variance of a wide collection of sample estimators.
+
+Take an estimator $\hat{\theta}$, denote $\hat{\theta}_{(.)}$ as the average of all subsample estimates, $\hat{\theta}_{(i)}$.
+
+$$
+\hat{Var}(\hat{\theta})_{jack} = \frac{n-1}{n} \sum_{i=1}^{n} (\hat{\theta}_{(i)} - \hat{\theta}_{(.)})^2
+$$
+
+#### Jackknife estimate of bias
+
+The jackknife technique can also be used to estimate the bias of an estimator calculated over the entire sample.
+
+We know that sample mean is an unbiased estimator of the population mean, so we can't continue to use the sample mean estimator as an example here to demonstrate the Jackknife estimate of bias (it would be 0). However, we also know that the uncorrected sample variance estimator is a biased estimator of the population variance. So we will use sample variance as an example here to introduce the Jackknife bias estimate. It's an estimate because we can't directly observe the true bias of the uncorrected sample variance estimator and hence use the technique to **estimate** the bias.
+
+The Jackknife estimate of the bias of an estimator $\hat{\theta}$ is given as
+
+$$
+\hat{bias}_{jack} = (n-1)(\hat{\theta}_{(.)} - \hat{\theta})
+$$
+
+Here $\hat{\theta}_{(.)}$ is the average of the subsample estimates. In the previous section where we use the sample mean estimator as an example, this average is denoted as $\bar{x}$, but $\hat{\theta}_{(.)}$ is more general. That is,
+
+$$
+\hat{\theta}_{(.)} = \frac{1}{n} \sum_{i=1}^{n} \hat{\theta}_{(i)}
+$$
+
+where $\hat{\theta}_{(i)}$ is the sample estimates from each subsample.
+
+We can also apply the estimator of interest to the entire sample and get the whole-sample estimate (as opposed to those leave-out subsamples in Jackknife). We denote the overall estimate as $\hat{\theta}$.
+
+We can think of the Jackknife estimate of the bias as the average of deviations between each subsample and the whole sample.
+
+Let's use the uncorrected sample variance estimator as an example.
+
+$$
+\hat{\sigma^2} = \frac{1}{n} \sum_{i=1}^{n} (X_i - \hat{\mu})^2
+$$
+
+We know that the bias is $E(\hat{\sigma^2} - \sigma^2)$.
+
+$$
+\begin{aligned}
+E(\hat{\sigma^2} - \sigma^2) &= E(\hat{\sigma^2}) - \sigma^2 \\
+&= \frac{n-1}{n} \sigma^2 - \sigma^2 \\
+&= -\sigma^2/n
+\end{aligned}
+$$
+
+To derive the Jackknife estimate of this bias, we first define what $\hat{\theta}_{(.)}$ and $\hat{\theta}$ are for the sample variance estimator.
+
+$$
+\hat{\theta} = \hat{\sigma^2} = \frac{1}{n} \sum_{i=1}^{n} (X_i - \hat{\mu})^2
+$$
+
+and
+
+$$
+\hat{\theta}_{(.)} = \hat{\sigma^2_{(.)}} = \frac{1}{n} \sum_{i=1}^{n} \hat{\sigma^2_{(i)}}
+$$
+
+The Jackknife estimate of this bias is
+
+$$
+\begin{aligned}
+\hat{bias}_{jack} &= (n-1) (\hat{\theta}_{(.)} - \hat{\theta}) \\
+&= (n-1) (\hat{\sigma^2_{(.)}} - \hat{\sigma^2}) \\
+&= (n-1)(\frac{1}{n} \sum_{i=1}^{n} \hat{\sigma^2_{(i)}} - \hat{\sigma^2})
+\end{aligned}
+$$
+
+in which,
+
+$$
+\hat{\sigma^2_{(i)}} = \frac{1}{n-1} \sum_{j=1,j \neq i}^{n} (X_j - \bar{x}_i)^2
+$$
+
+Note here we use the $\frac{1}{n-1}$ term because the summation has $n-1$ terms, corresponding to the $n-1$ elements (indexed by $j$) from the sample that form the subsample.
+
+Now in order to simplify the Jackknife bias estimate formula, we want to find a transformation to bring $\hat{\sigma^2_{(i)}}$ closer to $\hat{\sigma^2}$.
+
+Let's look at the $X_j - \bar{x}_i$ term first.
+
+$$
+\begin{aligned}
+X_j - \bar{x}_i &= X_j - \frac{n\hat{\mu} - X_i}{n-1} \\
+&= X_j - \frac{(n-1)\hat{\mu} + \hat{\mu} - X_i}{n-1} \\
+&= (X_j - \hat{\mu}) + \frac{1}{n-1}(X_i-\hat{\mu}) \\
+\end{aligned}
+$$
+
+The left side of the equation is the difference between an individual subsample element and the subsample mean. The equation says that the difference can be split into two terms. The first is the difference between the element and the overall sample mean. The second term is the adjustment which is equal to $\frac{1}{n-1}$ of the difference between the missing element $X_i$ and the overall sample mean.
+
+Now we express the term as the sum of two terms, both of which can be expressed as the difference between an element and the overall sample mean. We have the bridge to link $\hat{\sigma^2_{(i)}}$ to $\hat{\sigma^2}$.
+
+$$
+\begin{aligned}
+\hat{\sigma^2_{(i)}} &= \frac{1}{n-1} \sum_{j=1,j \neq i}^{n} (X_j - \bar{x}_i)^2 \\
+&= \frac{1}{n-1} \sum_{j=1,j \neq i}^{n} [(X_j - \hat{\mu}) + \frac{1}{n-1}(X_i-\hat{\mu})]^2 \\
+&= \frac{1}{n-1} \sum_{j=1,j \neq i}^{n} [(X_j - \hat{\mu})^2 + \frac{2}{n-1}(X_j - \hat{\mu})(X_i-\hat{\mu}) + \frac{1}{(n-1)^2}(X_i-\hat{\mu})^2] \\
+&= \frac{1}{n-1} [\sum_{j=1,j \neq i}^{n} (X_j - \hat{\mu})^2 + \frac{2}{n-1} \sum_{j=1,j \neq i}^{n} (X_j - \hat{\mu})(X_i-\hat{\mu}) + \frac{1}{(n-1)^2} \sum_{j=1,j \neq i}^{n} (X_i-\hat{\mu})^2] \\
+\end{aligned}
+$$
+
+Let's look at the second term first.
+
+$$
+\begin{aligned}
+\sum_{j=1,j \neq i}^{n} (X_j - \hat{\mu})(X_i-\hat{\mu}) &= (X_i-\hat{\mu}) \sum_{j=1,j \neq i}^{n} (X_j - \hat{\mu}) \\
+&= (X_i-\hat{\mu})(\sum_{j=1,j \neq i}^{n} X_j - (n-1)\hat{\mu}) \\
+&= (X_i-\hat{\mu})[(n\hat{\mu} - X_i) - (n-1)\hat{\mu}] \\
+&= (X_i-\hat{\mu})(n\hat{\mu} - X_i - n\hat{\mu} + \hat{\mu}) \\
+&= -(X_i-\hat{\mu})^2
+\end{aligned}
+$$
+
+The third term is straightforward to transform because there's no $j$-indexed term within.
+
+$$
+\begin{aligned}
+\sum_{j=1,j \neq i}^{n} (X_i-\hat{\mu})^2 &= (n-1)(X_i-\hat{\mu})^2
+\end{aligned}
+$$
+
+Finally, we can look at the first term.
+
+$$
+\sum_{j=1,j \neq i}^{n} (X_j - \hat{\mu})^2 = [\sum_{j=1,j \neq i}^{n} (X_j - \hat{\mu})^2 + (X_i - \hat{\mu})^2] - (X_i - \hat{\mu})^2
+$$
+
+Now we can substitute each term's transformation into the formula.
+
+$$
+\begin{aligned}
+\hat{\sigma^2_{(i)}} &= \frac{1}{n-1} [\sum_{j=1,j \neq i}^{n} (X_j - \hat{\mu})^2 + \frac{2}{n-1} \sum_{j=1,j \neq i}^{n} (X_j - \hat{\mu})(X_i-\hat{\mu}) + \frac{1}{(n-1)^2} \sum_{j=1,j \neq i}^{n} (X_i-\hat{\mu})^2] &(1) \\
+&= \frac{1}{n-1} \{ [\sum_{j=1,j \neq i}^{n} (X_j - \hat{\mu})^2 + (X_i - \hat{\mu})^2] - (X_i - \hat{\mu})^2 - \frac{2}{n-1} (X_i-\hat{\mu})^2 + \frac{1}{(n-1)^2} (n-1)(X_i-\hat{\mu})^2 \} &(2) \\
+&= \frac{1}{n-1} \{ [\sum_{j=1,j \neq i}^{n} (X_j - \hat{\mu})^2 + (X_i - \hat{\mu})^2] - (X_i - \hat{\mu})^2 - \frac{2}{n-1} (X_i-\hat{\mu})^2 + \frac{1}{n-1} (X_i-\hat{\mu})^2 \} &(3) \\
+&= \frac{1}{n-1} \{ [\sum_{j=1,j \neq i}^{n} (X_j - \hat{\mu})^2 + (X_i - \hat{\mu})^2] - (X_i - \hat{\mu})^2 - \frac{1}{n-1} (X_i-\hat{\mu})^2 \} &(4) \\
+&= \frac{1}{n-1} \{ [\sum_{j=1,j \neq i}^{n} (X_j - \hat{\mu})^2 + (X_i - \hat{\mu})^2] - (1 + \frac{1}{n-1}) (X_i - \hat{\mu})^2 \} &(5) \\
+&= \frac{1}{n-1} \{ [\sum_{j=1,j \neq i}^{n} (X_j - \hat{\mu})^2 + (X_i - \hat{\mu})^2] - \frac{n}{n-1} (X_i - \hat{\mu})^2 \} &(6) \\
+&= \frac{1}{n-1} [\sum_{j=1,j \neq i}^{n} (X_j - \hat{\mu})^2 + (X_i - \hat{\mu})^2] - \frac{n}{(n-1)^2} (X_i - \hat{\mu})^2 &(7) \\
+&= \frac{1}{n-1} \cdot n \cdot \hat{\sigma^2} - \frac{n}{(n-1)^2} (X_i - \hat{\mu})^2 &(8) \\
+&= \frac{n}{n-1} \hat{\sigma^2} - \frac{n}{(n-1)^2} (X_i - \hat{\mu})^2 &(9) \\
+&= s^2 - \frac{n}{(n-1)^2} (X_i - \hat{\mu})^2 &(10)
+\end{aligned}
+$$
+
+The transformation from (7) to (8) depends on the following equality.
+
+$$
+\begin{aligned}
+\sum_{j=1,j \neq i}^{n} (X_j - \hat{\mu})^2 + (X_i - \hat{\mu})^2 &= \sum_{k=1}^{n} (X_k - \hat{\mu})^2 \\
+&= n \cdot \hat{\sigma^2}
+\end{aligned}
+$$
+
+Recall that the Jackknife estimate of the bias is
+
+$$
+\begin{aligned}
+\hat{bias}_{jack} &= (n-1) (\hat{\theta}_{(.)} - \hat{\theta}) \\
+&= (n-1) (\hat{\sigma^2_{(.)}} - \hat{\sigma^2}) \\
+&= (n-1)(\frac{1}{n} \sum_{i=1}^{n} \hat{\sigma^2_{(i)}} - \hat{\sigma^2})
+\end{aligned}
+$$
+
+We still need to sum up $n$ $\hat{\sigma^2_{(i)}}$ to get $\hat{\sigma^2_{(.)}}$.
+
+$$
+\begin{aligned}
+\frac{1}{n} \sum_{i=1}^{n} \hat{\sigma^2_{(i)}} &= \frac{1}{n} \sum_{i=1}^{n} [\frac{n}{n-1} \hat{\sigma^2} - \frac{n}{(n-1)^2} (X_i - \hat{\mu})^2] \\
+&= \frac{1}{n} [\frac{n^2}{n-1}\hat{\sigma^2} - \frac{n}{(n-1)^2} \sum_{i=1}^{n} (X_i - \hat{\mu})^2] \\
+&= \frac{n}{n-1}\hat{\sigma^2} - \frac{1}{n} \cdot \frac{n}{(n-1)^2} \cdot n \cdot \hat{\sigma^2} \\
+&= \frac{n}{n-1} \hat{\sigma^2} - \frac{n}{(n-1)^2} \hat{\sigma^2} \\
+&= [\frac{n}{n-1} - \frac{n}{(n-1)^2}] \hat{\sigma^2} \\
+&= \frac{n(n-1)-n}{(n-1)^2} \hat{\sigma^2} \\
+&= \frac{(n-1)^2-1}{(n-1)^2} \hat{\sigma^2} \\
+&= [1-\frac{1}{(n-1)^2}] \hat{\sigma^2} \\
+\end{aligned}
+$$
+
+That is, the average of subsample uncorrected variance estimates is equal to the overall sample uncorrected variance estimate minus a small amount (note the term $\frac{1}{(n-1)^2}$ shrinks very fast when $n$ increases). This means $\frac{1}{n} \sum_{i=1}^{n} \hat{\sigma^2_{(i)}} < \hat{\sigma^2}$. It makes intuitive sense because $\hat{\sigma^2_{(i)}}$ is computed using subsamples which by definition is a subset of the overall sample and hence it's expected that dispersion (what variance is measuring) of a subset must be smaller than the dispersion of the overall.
+
+Now we can finally derive the Jackknife estimate of the bias of the uncorrected sample variance estimator.
+
+$$
+\begin{aligned}
+\hat{bias}_{jack} &= (n-1)(\frac{1}{n} \sum_{i=1}^{n} \hat{\sigma^2_{(i)}} - \hat{\sigma^2}) \\
+&= (n-1) \{ [1-\frac{1}{(n-1)^2}] \hat{\sigma^2} - \hat{\sigma^2} \} \\
+&= (n-1) \cdot \frac{-1}{(n-1)^2} \cdot \hat{\sigma^2} \\
+&= \frac{-\hat{\sigma^2}}{n-1} = \frac{-s^2}{n}
+\end{aligned}
+$$
+
+Thus, the Jackknife bias is constructed from a heuristic notion to emulate the bias of the uncorrected sample variance.
+
+If we take the estimator of interest $\hat{\theta}$ to be the **corrected** sampled variance estimator $s^2$, we can show that the Jackknife estimate of the bias is 0.
+
+$$
+\hat{bias}_{jack} = (n-1)(s_{(.)}^2 - s^2) = 0
+$$
+
+
+

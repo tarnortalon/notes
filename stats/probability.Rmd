@@ -1,0 +1,102 @@
+---
+title: "Probability"
+author: "Jarod G.R. Meng"
+date: "2/14/2021"
+output:
+  html_document:
+    toc: true
+    toc_depth: 5
+    toc_float: true
+    df_print: paged
+  pdf_document: default
+---
+
+# Probability
+
+## Probability distributions
+
+### Normal distribution {#normal_dist}
+
+#### Definitions
+
+A **normal** (or **Gaussian**) distribution is a *continuous* probability distribution.
+
+The general form of its **probability density function** is:
+
+$$
+f(x) = \frac{1}{\sigma\sqrt{2\pi}}e^{-\frac{1}{2}(\frac{x-\mu}{\sigma})^2}
+$$
+
+The parameter $\mu$ is the expected value or mean and $\sigma$ is the standard deviation. The variance of the distribution is $\sigma^2$.
+
+The normal distribution is often referred to as $N(\mu,\sigma^2)$.
+
+The simplest case of a normal distribution is known as the *standard normal distribution*. This is a special case when $\mu=0$ and $\sigma=1$. It can be described by the following probability density function.
+
+$$
+\varphi(x) = \frac{1}{\sqrt{2\pi}}e^{-\frac{1}{2}x^2}
+$$
+
+The shape of the probability density function is a **symmetric (around the mean) bell curve**. Its symmetry comes from the $x^2$ term. The negative sign in $-\frac{1}{2}x^2$ makes the curve greater in the middle and smaller on the sides.
+
+```{r include=FALSE}
+library(tidyverse)
+theme_set(theme_minimal())
+```
+
+
+```{r}
+ggplot() +
+  xlim(-3, 3) +
+  geom_function(fun = dnorm) +
+  labs(
+    x = expression(X %~% N(0, 1)), y = "probability density",
+    title = "Normal distribution P.D.F"
+  )
+```
+
+The **cumulative distribution function** of the standard normal distribution, usually denoted with the capital Greek letter $\Phi$, is the integral.
+
+$$
+\Phi(x) = \frac{1}{\sqrt{2\pi}}\int_{-\infty}^{x}e^{-t^2/2}dt
+$$
+
+```{r}
+ggplot() +
+  xlim(-3, 3) +
+  geom_function(fun = pnorm) +
+  labs(
+    x = expression(X %~% N(0, 1)), y = "probability density",
+    title = "Normal distribution C.D.F"
+  )
+```
+
+The quantile function is the inverse of the cumulative distribution function. The quantile function of a standard normal distribution is called the **probit** function. It's denoted as $\Phi^{-1}(x)$.
+
+```{r}
+ggplot() +
+  xlim(0, 1) +
+  geom_function(fun = qnorm) +
+  labs(
+    x = "density", y = expression(X %~% N(0, 1)),
+    title = "Normal distribution quantile function"
+  )
+```
+
+The quantile $\Phi^{-1}(p)$ of the standard normal distribution is commonly denoted as $z_{p}$. These values are used in hypothesis testing, construction of confidence intervals, and Q-Q plots. In particular, $Z_{0.975}=1.96$ and $Z_{0.025}=-1.96$. They are often used to construct confidence intervals of 95% significant level.
+
+#### Linear combination of two or more random variables
+
+If $X_1$ and $X_2$ are two independent standard normal random variables with mean 0 and variance 1, then
+
+1. Their sum and difference is distributed normally with mean 0 and variance 2
+
+$$
+X_1 \pm X_2 \sim N(0,2)
+$$
+
+1. If $X_1$, $X_2$, ..., $X_n$ are independent standard normal random variables, then the sum of their squares has the **chi-squared distribution** with $n$ degrees of freedom.
+
+$$
+X_1^2+...+X_n^2 \sim \chi_n^2
+$$

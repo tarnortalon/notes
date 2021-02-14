@@ -9,78 +9,15 @@ output:
   pdf_document: default
 ---
 
-# Probability
-
-## Probability distributions
-
-### Normal distribution {#normal_dist}
-
-#### Definitions
-
-A **normal** (or **Gaussian**) distribution is a *continuous* probability distribution.
-
-The general form of its **probability density function** is:
-
-$$
-f(x) = \frac{1}{\sigma\sqrt{2\pi}}e^{-\frac{1}{2}(\frac{x-\mu}{\sigma})^2}
-$$
-
-The parameter $\mu$ is the expected value or mean and $\sigma$ is the standard deviation. The variance of the distribution is $\sigma^2$.
-
-The normal distribution is often referred to as $N(\mu,\sigma^2)$.
-
-The simplest case of a normal distribution is known as the *standard normal distribution*. This is a special case when $\mu=0$ and $\sigma=1$. It can be described by the following probability density function.
-
-$$
-\varphi(x) = \frac{1}{\sqrt{2\pi}}e^{-\frac{1}{2}x^2}
-$$
-
-The shape of the probability density function is a symmetric (around the mean) bell curve. Its symmertry comes from the $x^2$ term. The negative sign in $-\frac{1}{2}x^2$ makes the curve greater in the middle and smallers on the sides.
-
-```{r}
-x <- seq(from = -6, to = 6, by = 0.001)
-plot(x, dnorm(x), cex = 0.25)
-```
-
-The **cumulative distribution function** of the standard normal distribution, usually denoted with the capital Greek letter $\Phi$, is the integral.
-
-$$
-\Phi(x) = \frac{1}{\sqrt{2\pi}}\int_{-\infty}^{x}e^{-t^2/2}dt
-$$
-
-```{r}
-x <- seq(from = -6, to = 6, by = 0.001)
-plot(x, pnorm(x), cex = 0.25)
-```
-
-The quantile function is the inverse of the cumulatie distribution function. The quantile function of a standard normal distribution is called the **probit** function. It's denoted as $\Phi^{-1}(x)$.
-
-```{r}
-x <- seq(from = 0, to = 1, by = 0.00001)
-plot(x, qnorm(x), cex = 0.25)
-```
-
-The quantile $\Phi^{-1}(p)$ of the standard normal distribution is commonly denoted as $z_{p}$. These values are used in hypothesis testing, construction of confidence intervals, and Q-Q plots. In particular, $Z_{0.975}=1.96$ and $Z_{0.025}=-1.96$. They are often used to construct confidence intervals of 95% significant level.
-
-#### Linear combination of two or more random variables
-
-If $X_1$ and $X_2$ are two independent standard normal random variables with mean 0 and variance 1, then
-
-1. Their sum and difference is distributed normally with mean 0 and variance 2
-
-$$
-X_1 \pm X_2 \sim N(0,2)
-$$
-
-1. If $X_1$, $X_2$, ..., $X_n$ are independent standard normal random variables, then the sum of their squares has the **chi-squared distribution** with $n$ degrees of freedom.
-
-$$
-X_1^2+...+X_n^2 \sim \chi_n^2
-$$
-
 # Statistics
 
 Assuming there's a population. Let's first assume that the underlying distribution is a normal distribution. We can simulate 10,000 such values easily.
+
+```{r include=FALSE}
+library(tidyverse)
+library(scales)
+theme_set(theme_minimal())
+```
 
 ```{r}
 set.seed(42)
@@ -94,7 +31,7 @@ Mean is the **expected value of an element** in the population. Since it's compu
 
 ### Interpretations
 
-There are two interpretations of the definiton.
+There are two interpretations of the definition.
 
 #### A single population interpretation
 
@@ -124,7 +61,7 @@ Another interpretation is that the population mean is the expected value of an e
 
 Here we don't assume that we have access to the entire population, but we have a way of observing a random element of the population. This interpretation is closer to reality in which we never really see an entire population.
 
-Under this interpretation, we actually can't compute the exact value of $\mu$ as we don't have coverage of all elements in the population (we actually don't even know the size of the population). Instead, the population mean $\mu$ is simply defined as the expected value of a randonly drawn element of the population.
+Under this interpretation, we actually can't compute the exact value of $\mu$ as we don't have coverage of all elements in the population (we actually don't even know the size of the population). Instead, the population mean $\mu$ is simply defined as the expected value of a randomly drawn element of the population.
 
 $$
 \mu = E(X \in A)
@@ -142,13 +79,13 @@ $$
 SSD(x) = \sum_{i=1}^{N}(A_i - x)^2
 $$
 
-The populatio mean's squared-differences-minimizing property means
+The population mean's squared-differences-minimizing property means
 
 $$
 SSD(\mu) <= SSD(\text{any number})
 $$
 
-To find the value that minimizes the sum of squared differences, we can set the derivatie of $SSD(x)$ to 0 and solve for $x$.
+To find the value that minimizes the sum of squared differences, we can set the derivative of $SSD(x)$ to 0 and solve for $x$.
 
 $$
 \begin{aligned}
@@ -164,16 +101,23 @@ That is, **the population mean minimizes the sum of squared differences**.
 We can use simulation to verify this property of the mean.
 
 ```{r}
-# Generate a lot of possible $a$ values
+sum_squared_diff <- function(x) sapply(x, function(x) sum((A-x)^2))
+ggplot() +
+  xlim(8, 12) +
+  geom_function(fun = sum_squared_diff) +
+  scale_y_continuous(label = comma) +
+  labs(
+    x = "X", y = "SSD",
+    title = "Possible SSD values"
+  )
 X <- seq(from = 8, to = 12, by = 0.0001)
-sum_squared_diff <- sapply(X, function(x) sum((A-x)^2))
-plot(X, sum_squared_diff, cex = 0.25)
+y <- sum_squared_diff(X)
 ```
 
 We can see that the $x$ value that minimizes the sum of squared differences is around 10, but it's hard to pinpoint its value. We can find its precise value using the simulation result.
 
 ```{r}
-(x <- X[which(sum_squared_diff == min(sum_squared_diff))])
+(x <- X[which(y == min(y))])
 ```
 
 We can verify that the $x$ value we found is indeed equal to the mean.
@@ -184,7 +128,7 @@ all.equal(x, MU, tolerance = 0.001)
 
 ```{r include=FALSE}
 rm(X)
-rm(sum_squared_diff)
+rm(y)
 ```
 
 ##### Median's minimizing property
@@ -228,6 +172,7 @@ Variance is the **expectation of the squared deviation** of a random variable to
 $$
 \sigma^2 = E[(A_i - \mu)^2]
 $$
+We can work out the computations using some algebra.
 
 $$
 \begin{aligned}
@@ -293,7 +238,7 @@ It's the difference between the estimate obtained from applying the estimator (a
 
 ### Mean squared error (MSE)
 
-The MSE of an estimator is defined as the **exepcted value of the squared error**.
+The MSE of an estimator is defined as the **expected value of the squared error**.
 
 $$
 MSE(\hat{\theta}) = E[(\hat{\theta}(X)-\theta)^2]
@@ -325,7 +270,7 @@ Here $\hat{\theta}$ is treated as a random variable that's the result of applyin
 
 If the parameter is the bull's-eye of a target, and the arrows are estimates, then the variance measures how dispersed those arrows are from each other. *It has nothing to do with the true parameter $\theta$*. That is, if all arrows hit the same point but the point is nowhere near the bull's eye, the variance is still 0.
 
-The square root of the variance is called the **standard error* of $\hat{\theta}$. Note that the term *error* here has nothing to do with the true parameter $\theta$.
+The square root of the variance is called the **standard error** of $\hat{\theta}$. Note that the term *error* here has nothing to do with the true parameter $\theta$.
 
 ### Bias
 
@@ -343,7 +288,7 @@ $$
 E(\theta) = \theta
 $$
 
-We can express the bias of an esimator as the **expected value of the error**.
+We can express the bias of an estimator as the **expected value of the error**.
 
 $$
 B(\hat{\theta}) = E(\hat{\theta}) - E(\theta) = E(\hat{\theta}-\theta)
@@ -411,7 +356,7 @@ The important understanding here is that $E(X_i) = \mu$ because $X_i$ is randoml
 
 ##### Proof 2
 
-There's also an alternative way of proving that sample mean estimator is an unbiased esimator of the population mean. But this proof has its limitations.
+There's also an alternative way of proving that sample mean estimator is an unbiased estimator of the population mean. But this proof has its limitations.
 
 Under the assumption that $X_i$ is randomly drawn (**without replacement**) from the population $A$, we can transform the sum of sample elements to the sum of product of population elements and a probability term.
 
@@ -421,7 +366,7 @@ $$
 
 In the formula above, $Z_i$ is a binary random variable of 0 or 1. It indicates if a particular population element $A_i$ is excluded or included in the sample $X$. We can think of $Z$ as a binary switch that randomly decide which population units to be drawn into the sample. This line of reasoning breaks down when the sampling is done with replacement since it's equivalent to $Z_i$ being a binary switch.
 
-To compute the overall expected value, we need to figure out the probablity of $Z_i$ equal to 1, namely $Pr(Z_i = 1)$. Note that the probability of $Z_i$ equal to 0 is simply the complement, namely, $Pr(Z_i = 0) = 1 - Pr(Z_i = 1)$, because $Z_i$ can only take a value of 0 or 1.
+To compute the overall expected value, we need to figure out the probability of $Z_i$ equal to 1, namely $Pr(Z_i = 1)$. Note that the probability of $Z_i$ equal to 0 is simply the complement, namely, $Pr(Z_i = 0) = 1 - Pr(Z_i = 1)$, because $Z_i$ can only take a value of 0 or 1.
 
 The probability $Pr(Z_i = 1)$ is a fraction. The numerator is the total number of ways element $A_i$ is included in the $n$-element sample. The denominator is the total number of ways an $n$-element sample can be drawn from the $N$-element population.
 
@@ -434,7 +379,7 @@ Therefore,
 $$
 Pr(Z_i = 1) = \frac{\binom{N-1}{n-1}}{\binom{N}{n}} = \frac{\frac{(N-1)!}{(n-1)!(N-n)!}}{\frac{N!}{n!(N-n)!}} = \frac{\frac{(N-1)!}{(n-1)!}}{\frac{N!}{n!}} = \frac{\frac{(N-1)!}{(n-1)!}}{\frac{N(N-1)!}{n(n-1)!}} = \frac{n}{N}
 $$
-This makes intuitive sense. When $n=1$, $Pr(Z_i = 1) = \frac{1}{N}$ because the probability of an elment $A_i$ is drawn from the population is the same as the probability of any other element in the population (this is the definition of a random sample), so it's $\frac{1}{N}$. On the other hand, when $n=N$, $Pr(Z_i = 1) = 1$ because such a sample is simply the entire population and because it's sampling without replacement, every element $A_i$ is bound to be included.
+This makes intuitive sense. When $n=1$, $Pr(Z_i = 1) = \frac{1}{N}$ because the probability of an element $A_i$ is drawn from the population is the same as the probability of any other element in the population (this is the definition of a random sample), so it's $\frac{1}{N}$. On the other hand, when $n=N$, $Pr(Z_i = 1) = 1$ because such a sample is simply the entire population and because it's sampling without replacement, every element $A_i$ is bound to be included.
 
 Now we can return to derive the expected value of $\hat{\mu}$.
 
@@ -454,7 +399,7 @@ So the sample mean is an **unbiased estimator** of the population mean.
 
 ##### Variance of the sample mean estimator
 
-So far we've established that the expected value (or mean) of the sample mean estimates is the population mean. How about the variance of the sample mean estimates? Recall that here we treat sample means from many $n$-element sample as a random varianble by itself. Every time we draw a different $n$-element sample, we get a differnet sample mean estimates and the collection of many sample mean estimates form the distribution of the random variable.
+So far we've established that the expected value (or mean) of the sample mean estimates is the population mean. How about the variance of the sample mean estimates? Recall that here we treat sample means from many $n$-element sample as a random variable by itself. Every time we draw a different $n$-element sample, we get a different sample mean estimates and the collection of many sample mean estimates form the distribution of the random variable.
 
 $$
 \begin{aligned}
@@ -560,7 +505,7 @@ E[\frac{1}{n}\sum_{i=1}^{n}(X_i-\mu)^2] &= \frac{1}{n} \cdot n \cdot E[(X_i-\mu)
 \end{aligned}
 $$
 
-Another interesting term in equaltion (4) above is the last term $E[\sum_{i=1}^{n}(\hat{\mu}-\mu)^2]$. This is basically the variance of the sample mean estimator, namely $Var(\hat{\mu})$.
+Another interesting term in equation (4) above is the last term $E[\sum_{i=1}^{n}(\hat{\mu}-\mu)^2]$. This is basically the variance of the sample mean estimator, namely $Var(\hat{\mu})$.
 
 $$
 E[\frac{1}{n}\sum_{i=1}^{n}(\hat{\mu}-\mu)^2] = Var(\hat{\mu}) = \frac{1}{n}\sigma^2
@@ -637,7 +582,7 @@ for (i in seq_along(X)) {
 }
 ```
 
-The difference between the black line (i.e., $\sigma^2$) and the blue line (i.e., $s^2$) is the bias of the naive sample variance estimator. To be more pricise, it's the bias manifested in this particular simulation case.
+The difference between the black line (i.e., $\sigma^2$) and the blue line (i.e., $s^2$) is the bias of the naive sample variance estimator. To be more precise, it's the bias manifested in this particular simulation case.
 
 #### Variance of sample variance distribution
 
@@ -706,7 +651,7 @@ $$
 \end{aligned}
 $$
 
-Since $\hat{\mu}$ is an unbiased estimator of the population mean, the Jackknife sample mean estimator is also an unbiased estimator of the populatio mean. In fact, $\hat{\mu}_{jackknife}$ is exactly the same as $\hat{\mu}$. It's just a different way of computing the same estimate.
+Since $\hat{\mu}$ is an unbiased estimator of the population mean, the Jackknife sample mean estimator is also an unbiased estimator of the population mean. In fact, $\hat{\mu}_{jackknife}$ is exactly the same as $\hat{\mu}$. It's just a different way of computing the same estimate.
 
 #### Jackknife estimate of the sample mean variance
 
@@ -758,7 +703,7 @@ $$
 
 The transformation step (1) is just using the definition of $\bar{x}_{(i)}$ and the rest is straightforward algebra.
 
-Now we can substite $\bar{x}_{(i)} - \hat{\mu}_{jack}$ in the formula.
+Now we can substitute $\bar{x}_{(i)} - \hat{\mu}_{jack}$ in the formula.
 
 $$
 \begin{aligned}

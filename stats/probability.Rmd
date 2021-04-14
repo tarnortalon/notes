@@ -69,6 +69,7 @@ The binomial distribution is a discrete probability distribution of the number o
 
 ```{r include=FALSE}
 library(tidyverse)
+library(glue)
 theme_set(theme_minimal())
 ```
 
@@ -91,7 +92,7 @@ tibble(
 
 The support (i.e., all possible values of $x$) $k \in \{0, 1, 2, ..., n\}$. For example, in the binomial distribution $B(20, 0.5)$ above, the support is all integer numbers from 0 to 20.
 
-A binomial distribution is not always symmetrical. Below we show a few binomial distributions with the same $n=20$ size parameter, but different $p$ parameter. Only the distribution $B(20, 0.5)$ is symmetrical. Others are skewed depending on the $p$ values.
+A binomial distribution is not always symmetric. Below we show a few binomial distributions with the same $n=20$ size parameter, but different $p$ parameter. Only the distribution $B(20, 0.5)$ is symmetric. Others are skewed depending on the $p$ values.
 
 ```{r}
 binom_density <- function(p) {
@@ -290,6 +291,40 @@ $$
 
 and that's exactly what the Poisson distribution's probability mass function is.
 
+We can compare the two distributions' cumulative distribution functions in the chart below. As we fix the $\lambda$ parameter of the Poisson distribution and increase the $n$ parameter of the binomial distribution, the two distributions look more and more similar.
+
+```{r}
+compare_binom_pois <- function(lambda = 5) {
+  ns <- c(10, 20, 50)
+  x <- seq(0, lambda*3, 1)
+  .binom_data <- function(n) {
+    tibble(
+      !!paste0("binom_", n) := pbinom(x, size = n, prob = lambda/n)
+    )
+  }
+  map_dfc(ns, .binom_data) %>%
+    mutate(
+      x = x,
+      pois = ppois(x, lambda)
+    ) %>%
+  pivot_longer(
+    cols = -x,
+    names_to = "distribution",
+    values_to = "density"
+  ) %>%
+  mutate(
+    distribution = factor(distribution, levels = c("pois", paste0("binom_", ns)))
+  ) %>%
+  ggplot(aes(x = x, y = density)) +
+    geom_line(aes(color = distribution)) +
+    labs(
+      x = glue("X ~ Pois({lambda})"), y = "cumulative probability density",
+      title = "Compare binomial and Poisson C.D.F"
+    )
+}
+compare_binom_pois(lambda = 5)
+```
+
 ## Continuous probability distributions
 
 ### Normal distribution {#normal_dist}
@@ -371,3 +406,9 @@ $$
 $$
 X_1^2+...+X_n^2 \sim \chi_n^2
 $$
+
+### Student's t distribution {#t_dist}
+
+Student's t distribution arises when estimating the mean of a normally-distributed population in situations where **the sample size is small** (a rule of thumb is $n<30$) and **the population's standard deviation is unknown**.
+
+The t distribution is symmetric (like the normal distribution) and bell-shaped, but has *heavier tails*, meaning that it is more prone to producing extreme values than the normal distribution.

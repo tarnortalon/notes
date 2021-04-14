@@ -1,0 +1,57 @@
+---
+title: "Causal inference"
+author: "Jarod G.R. Meng"
+date: "2/17/2021"
+output:
+  html_document:
+    toc: true
+    toc_depth: 5
+    toc_float: true
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## The selection problem
+
+Most of the content here is borrowed from Chapter 2 of <Mostly harmless econometrics>.
+
+Let's set up an abstract causal inference problem whereby there's a response variable called $Y$ and a boolean variable indicating if treatment is given called $T$.
+
+### An observational study
+
+In an observational study, we don't get to control which unit receives or doesn't receive the treatment. The treatment data is given in the data. That is, for any individual (indexed using the subscript $i$), we are given their actual treatment status, $T_i \in \{0, 1\}$, where $0$ indicates no treatment and $1$ indicates treatment.
+
+$$
+\begin{aligned}
+Y_i &= 
+  \begin{cases}
+  Y_{1i} & \text{if }T_i = 1 \\
+  Y_{0i} & \text{if }T_i = 0 \\
+  \end{cases} \\
+  &= Y_{0i} + (Y_{1i}-Y_{0i}) \cdot T_i
+\end{aligned}
+$$
+
+$Y_{0i}$ is the result if a unit didn't receive the treatment, while $Y_{1i}$ is the result if the unit received the treatment. Note that in an observational study, we only get to observe one of the outcomes (i.e., $Y_i$ is either $Y_{0i}$ or $Y_{1i}$, depending on the given value of $T_i$). Here $Y_{1i}-Y_{0i}$ is the causal effect of treatment **for the individual unit**. It's not directly measurable for the reason mentioned just now. What we're interested is the overall *average treatment effect* across units (i.e., $E(Y_1-Y_0)$) and it is by extension not directly measurable either.
+
+Although the overall average treatment effect is not directly measurable, we can conceptually decompose it using conditionals.
+
+$$
+\begin{aligned}
+\text{observed effect} &= E(Y_1|T=1) - E(Y_0|T=0) \\
+&= [E(Y_1|T=1) - E^*(Y_0|T=1)] + [E^*(Y_0|T=1) - E(Y_0|T=0)]
+\end{aligned}
+$$
+
+The observed effect (i.e., $E(Y_1|T=1) - E(Y_0|T=0)$) is between two distinct groups of units, namely those that received treatments ($T=1$) and those who didn't ($T=0$).
+
+The formula above shows that the observed effect can be broken into two additive parts.
+1) $E(Y_1|T=1) - E^*(Y_0|T=1)$ is the true treatment effect (albeit limited to the units that received treatments). This is not measurable because $E(Y_0|T=1)$ is not observed (hence the $*$ superscript indicating that it's *hypothetical*).
+2) $E^*(Y_0|T=1) - E(Y_0|T=0)$ is the innate difference between the treatment and non-treatment groups that has nothing to do with the treatment. We call this term the **selection bias** because it's entirely due to the *selection* of units into treatment vs. non-treatment groups. This is not measurable either for the same reason that $E(Y_0|T=1)$ is not observed.
+
+
+

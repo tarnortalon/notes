@@ -1,4 +1,5 @@
-# zoo package
+# https://cran.r-project.org/web/packages/zoo/vignettes/zoo.pdf
+
 library(zoo)
 set.seed(1071)
 

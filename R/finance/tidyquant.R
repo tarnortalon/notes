@@ -15,6 +15,7 @@ tq_exchange("NASDAQ")
 ?tq_get
 tq_get_options()
 tq_get("PLTR")
+tq_get("VNQ")
 
 ?tq_transmute
 ?periodReturn
@@ -25,7 +26,28 @@ tq_get("PLTR") %>%
     period = "daily",
     col_rename = "daily.adjusted.returns"
   )
-tq_mutate_fun_options()
+
+?tq_mutate_fun_options()
+etf.vnq.returns <- tq_get("VNQ") %>%
+  tq_transmute(
+    select = adjusted,
+    mutate_fun = periodReturn,
+    period = "monthly",
+    col_rename = "monthly.returns"
+  )
+etf.vnq.returns %>%
+  ggplot(aes(x = monthly.returns)) +
+    geom_density()
+etf.schh.returns <- tq_get("SCHH") %>%
+  tq_transmute(
+    select = adjusted,
+    mutate_fun = periodReturn,
+    period = "monthly",
+    col_rename = "monthly.returns"
+  )
+etf.schh.returns %>%
+  ggplot(aes(x = monthly.returns)) +
+  geom_density()
 
 ?tq_performance
 tq_performance_fun_options()
@@ -206,3 +228,41 @@ FANG_macd %>%
        y = "MACD", x = "", color = "") +
   theme_tq() +
   scale_color_tq()
+
+x <- tq_get(
+  c("NASDAQCOM", "SFXRSA"), get = "economic.data", from = "2011-01-01"
+)
+y <- tq_get("GOOG", from = "2011-01-01")
+xy <- bind_rows(
+  select(x, symbol, date, price),
+  select(y, symbol, date, price = adjusted)
+)
+xy %>%
+  group_by(symbol) %>%
+  tq_transmute(
+    select = price,
+    mutate_fun = allReturns
+  ) %>%
+  select(symbol, date, yearly) %>%
+  na.omit() %>%
+  mutate(year = lubridate::year(date)) %>%
+  select(year, symbol, yearly) %>%
+  # pivot_wider(names_from = symbol, values_from = yearly) %>%
+  ggplot(aes(x = year, y = yearly)) +
+    geom_col(aes(fill = symbol), position = "dodge", alpha = 0.75) +
+    scale_y_continuous(label = scales::percent)
+x.returns <- x %>%
+  group_by(symbol) %>%
+  tq_transmute(
+    select = price,
+    mutate_fun = allReturns
+  )
+x <- tq_get("SPY", get = "stock.prices", from = "2011-01-01")
+x %>%
+  tq_mutate(
+    selct = adjusted,
+    mutate_fun = monthlyReturn
+  )
+x.returns %>%
+  select(date, yearly) %>%
+  na.omit()

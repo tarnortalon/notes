@@ -89,3 +89,10 @@ I define `JAVA_HOME` in my `.zshenv` file using the `java_home` command (see [ar
 ~ % cat ~/.zshenv
 export JAVA_HOME=$(/usr/libexec/java_home)
 ```
+
+The variable evaluates to the following folder.
+
+```shell
+~ % echo $JAVA_HOME
+/Library/Java/JavaVirtualMachines/jdk-15.0.1.jdk/Contents/Home
+```

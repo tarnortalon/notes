@@ -1,0 +1,430 @@
+---
+title: "An R Companion to Applied Regression"
+author: "Jarod G.R. Meng"
+date: "4/14/2021"
+output:
+  html_document:
+    toc: true
+    toc_depth: 5
+    toc_float: true
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2movies)
+library(car)
+library(effects)
+```
+
+This is the reading notes of the book <An R Companion to Applied Regression> by John Fox and Sanford Weisberg.
+
+The book was mainly written using base `R` rather than `tidyverse` or `tidymodels`. As I take down notes on the important points of the book, I also attempt to transform some of the code to more modern versions.
+
+## Chapter 1: Getting started with R and RStudio
+
+Skipped.
+
+## Chapter 2: Reading and Manipulating Data
+
+Skipped.
+
+## Chapter 3: Exploring and Transforming Data
+
+Visualization (or as the authors put it, statistical graphs) plays 3 important roles in an analyst's journey.
+
+1. Graphs provide an *initial* look at the data. It usually provides me with the intuition of the data (e.g., distributions, histograms, types of columns, levels of factors, outliers, etc). This is usually called *exploratory data analysis (EDA)*.
+
+2. Graphs help during the model building phase, particularly in diagnostic methods used to assess the adequacy of a model fit to the data.
+
+3. Presentation graphs can summarize data or fitted models *for the benefit of others*.
+
+### Examining distributions
+
+Practically we can only examine *univariate* or *bivariate* distributions (using histogram and scatterplot respectively). Higher-dimensional multivariate distributions is difficult to draw and interpret.
+
+#### Univariate distribution
+
+Here we usually assume the variable is a **numeric** variable which can be either discrete (e.g., integer values) or continuous (e.g. real values).
+
+I often find myself asking a few common questions about a (numeric) variable before I set out to analyze or model the data. A good EDA process helps standardize answering those questions. More often than not, the utility of doing such an EDA on the data (before analysis or modeling) manifests incrementally during the whole course of analysis. To make the EDA effort more worthwhile, it makes sense to try to reduce the costs of doing EDA by making it standardized and functionalized.
+
+Common questions I usually ask include:
+
+1. What's the range of this variable, i.e., `p0` and `p100`, or min and max?
+
+2. What values are more common in this variable?
+
+3. Are there any outliers in this variable?
+
+4. What type of common distribution does this variable look like?
+
+The common tools to examine a univariate distribution to answer those questions include:
+
+1. descriptive statistics:
+
+    1. mean summary: usually simply call `mean(na.rm = TRUE)` on the variable.
+
+    1. quartile summary: usually `[p0, p25, p50, p75, p100]` of the variable.
+      
+        We can use the `fivenum()` function to get the 5 quartile statistics.
+    
+        ```{r}
+        fivenum(movies$rating)
+        ```
+        
+        The output is simply a numeric vector with no names. The `summary()` function provides a bit more information (i.e., mean of the variable) and more readability (i.e., the element names), but the result is of class `table` which is essentially an array (although for a single variable it behaves like a vector).
+    
+        ```{r}
+        summary(movies$rating)
+        ```
+  
+        Sometimes the outputs can be a little different between the `fivenum()` and `summary()`. This is because `summary()` by default uses `quantile.type = 7`. You can use `quantile.type = 5` to get the same results as `fivenum()`.
+        
+        Under the hood, `summary()` uses the `quantile()` function to get the quartile statistics. So we can call the `quantile()` function directly. Note that in this case, we won't have the mean statistic.
+        
+        ```{r}
+        quantile(movies$rating)
+        ```
+
+1. binning
+
+    Binning is essentially a way to transform a numeric variable into a categorical one (i.e., a factor). The original numeric variable can be discrete or continuous.
+
+    There are two types of basic binning one can do:
+
+    1. Equal-width binning. This is the most common binning. The goal is to divide a range (usually defined as `[min, max]`) into a few sub divisions, each with the same width.
+  
+        If the total length of the range is $L = max - min$ and it needs to be divided into $J$ sub divisions, then each sub division's width $W = \frac{L}{J}$.
+  
+    1. Equal-count binning. Instead of dividing the entire range into $N$ equal-width sub divisions, we can divide it in such a way that each sub divisions have the same number of observations as much as possible (the AMAP qualification is necessary here because the counts of observations is fundamentally a *discrete* number).
+  
+        If the total number of observations is $N$, and we need to divide the observations into $J$ equal-count bins, then each bin should have around $\frac{N}{J}$ observations.
+      
+        Quantiles are actually very close to equal-count binning.
+      
+        ```{r}
+        set.seed(42)
+        # random N = 1005 numbers
+        x <- rnorm(1005)
+        # each quantile bin has rought N/10 = 100.5 (i.e., 100 or 101) observations
+        table(cut(x, quantile(x, probs = seq(0, 1, 0.1)), include.lowest = TRUE))
+        ```
+      
+        The `cut()` function is the generic function to transform a numeric variable into a factor based on a set of breaks.
+
+1. tabulation
+
+    Tabulation is a way to build a contingency table of the counts. It's usually applied on a factor so to give a summary of how many observations belong to each factor level. `table()` is the base function to perform tabulation. `xtabs()` is for cross tabulation of data frames with a formula interface.
+
+1. histogram
+    
+    Histogram is the most common tool for univariate EDA. It actually involves two distinct steps: 1) binning the data and 2) plotting the bin-level statistic (usually the counts).
+    
+    The first step (i.e., binning) is usually implicit as the histogram functions (e.g., `hist()`, `truehist()`, and `geom_histogram()`) usually have smart defaults. However, it's often better for the analyst to try out different binning strategies in doing histogram plotting to get a more complete picture of the data.
+    
+    The most basic histogram function is `hist()`.
+
+    * By default, it uses the Sturges method for computing the number of bins. Other options include Scott and FD (which stands for Freedman-Diaconics).
+    
+    * By default, the breaks are computed using the `pretty()` function (e.g., `pretty(range(x), n = nclass.Sturges(x), min.n = 1)`).
+    
+    * By default, the y-axis refers to the number of observations (i.e., counts) in each bin.
+
+    ```{r}
+    nclass.Sturges(movies$rating)
+    pretty(range(movies$rating), n = nclass.Sturges(movies$rating), min.n = 1)
+    hist(movies$rating)
+    ```
+    
+    We can turn off the `freq` argument to change the y-axis to density.
+    
+    ```{r}
+    hist(movies$rating, freq = FALSE)
+    ```
+    
+    An alternative of the `hist()` function is the `truehist()` function from the `MASS` package. The key difference is that it by default displays the density rather than the count on the y-axis.
+    
+    ```{r}
+    MASS::truehist(movies$rating)
+    ```
+
+    To replicate the outputs from `hist()` or `truehist()` using `ggplot2`, one can use the `scale_x_binned()` function. Here we need to manually provide the same breaks using the `pretty()` function.
+
+    ```{r}
+    ggplot(movies, aes(rating)) +
+      geom_bar() +
+      scale_x_binned(
+        breaks = pretty(
+          range(movies$rating),
+          n = nclass.Sturges(movies$rating),
+          min.n = 1
+        )
+      )
+    ```
+
+    A more commonly-used function is `geom_histogram()`.
+    
+    ```{r}
+    ggplot(movies, aes(rating)) +
+      geom_histogram(
+        breaks = pretty(
+          range(movies$rating),
+          n = nclass.Sturges(movies$rating),
+          min.n = 1
+        )
+      )
+    ```
+    
+    Changing the y-axis to density requires changing the y aesthetic to a computed value `..density..`.
+    
+    ```{r}
+    ggplot(movies, aes(rating)) +
+      geom_histogram(
+        aes(y = ..density..),
+        breaks = pretty(
+          range(movies$rating),
+          n = nclass.Sturges(movies$rating),
+          min.n = 1
+        )
+      )
+    ```
+    
+    Sometimes one wishes to know what percentage of observations (i.e., relative frequency) come from each bin. There's no existing computed statistic in `ggplot2`, so we need to compute it using `..count..`.
+    
+    ```{r}
+    ggplot(movies, aes(rating)) +
+      geom_histogram(
+        aes(y = ..count../sum(..count..)),
+        breaks = pretty(
+          range(movies$rating),
+          n = nclass.Sturges(movies$rating),
+          min.n = 1
+        )
+      ) +
+      scale_y_continuous(labels = scales::percent)
+    ```
+
+1. density plot
+
+    We already see the histogram can show the density (i.e., $\frac{count_i}{\sum(count_i) \times width_i}$) for each bin. A density plot shows a *continuous* estimate of the densities across the range of the variable.
+
+    In statistics, kernel density estimation (KDE) is a *non-parametric* way to estimate the probability density function of a random variable ([Wikipedia link](https://www.wikiwand.com/en/Kernel_density_estimation)).
+    
+    Usually the default density estimation is sufficient to get a rough feel of what the data looks. Other smart density estimation functions exist, such as `car::adaptiveDensity()`.
+
+    ```{r}
+    hist(movies$rating, freq = FALSE)
+    lines(density(movies$rating), lwd = 3, lty = 1)
+    ```
+
+1. box plot
+
+    A box plot ([Wikipedia link](https://www.wikiwand.com/en/Box_plot)) provides a visual summary of a variable's quartile and distribution information.
+
+    * The middle thick line represents the media (i.e., `p50`).
+    
+    * The gray *box* represents the inter-quartile range (i.e., IQR), that is, `[p25, p75]`. So by definition, roughly half of the observations fall into this range.
+    
+    * The whiskers (the dotted vertical line) extend some length from the IQR. Observations outside of the whiskers are considered outliers.
+    
+    The most basic box plot function is `boxplot()`. By default, the whiskers extend by $1.5 \times IQR$ from the 1st and 3rd quartiles, or the max/min values in the observations.
+
+    ```{r}
+    boxplot(movies$rating)
+    ```
+    
+    The `range` argument can be used to adjust the whisker extension.
+
+    ```{r}
+    # adjust the whisker range to 2 times the IQR
+    boxplot(movies$rating, range = 2)
+    ```
+    
+    `ggplot2`'s `geom_boxplot()` function provides the same functionality. By default, for a univariate variable, it shows the box plot horizontally for better readability. The whisker range is controlled by the `coef` argument whose default value is set to 1.5 to match the `boxplot()` function.
+    
+    ```{r}
+    ggplot(movies, aes(x = rating)) +
+      geom_boxplot()
+    ```
+
+1. quantile-quantile plot (QQ-plot)
+
+    A quantile-quantile plot helps eyeball-check if a variable's distribution resembles a known distribution (usually normal distribution).
+
+    ```{r}
+    qqnorm(movies$rating, cex = 0.5)
+    qqline(movies$rating, col = 2, lwd = 3)
+    ```
+
+    The `car` package provides a `qqPlot()` function that adds a 95% confidence interval around the fitted line.
+
+    ```{r}
+    car::qqPlot(~rating, data = movies, id = FALSE, cex = 0.5)
+    ```
+
+    `ggplot2` has `stat_qq()` and `stat_qq_line()` for producing the Q-Q plot and the fitted line.
+
+    ```{r}
+    ggplot(movies, aes(sample = rating)) +
+      stat_qq(size = 1) +
+      stat_qq_line(color = "blue")
+    ```
+
+### Transforming data
+
+> The way we measure and record data may not necessarily reflect the way the data should be used in a regression analysis.
+
+#### Log and power transformation
+
+Logarithmic scale corresponds to viewing variation through *relative* or percentage changes, rather than through *absolute* changes.
+
+Logarithms spread out the small values and compress the large ones, producing more symmetric distribution for positively-skewed (i.e., right-skewed) data.
+
+Logarithms are sufficiently important in data analysis to suggest a rule: For any *strictly positive* variable with no fixed upper bound whose values cover two or more orders of magnitude (that is, powers of 10), replacing the variable by its logs is likely to be helpful.
+
+Box and Cox (1964) introduced a family of scaled power transformations defined by
+
+$$
+y = T_{BC}(x, \lambda) = x^{(\lambda)} = 
+  \begin{cases}
+    \frac{x^{\lambda}-1}{\lambda}, \text{ when } \lambda \neq 0\\
+    log(x), \text{ when } \lambda = 0\\
+  \end{cases}
+$$
+
+* The transformation output $y$ preserves the order of $x$.
+
+* For $\lambda \neq 0$, the scaled power transformations are essentially $x^{\lambda}$.
+
+* The important threshold here is $\lambda=1$ which represents *no transformation*.
+
+  * When $\lambda<1$, the transformation spreads out small values and compresses large ones, so effectively reduces the right skew. That is, a proper $\lambda$ value can transform a right-skewed variable to a more normal one.
+  
+  * When $\lambda>1$, the transformation compresses small values and spreads out large ones, so essentially reduces the left skew.
+  
+The abovementioned points can be better understood if we look at the first derivatives of the scaled power transformation function.
+
+$$
+\frac{dy}{dx} = \frac{d\ T_{BC}(x, \lambda)}{d\ x}=x^{\lambda-1}
+$$
+Note that we don't have to differentiate the $\lambda=0$ case when we look at the derivative because
+
+$$
+\frac{d\ log(x)}{d\ x} = \frac{1}{x} = x^{-1}
+$$
+* When $x$ is strictly positive, $x^{\lambda-1}$ is positive too, so the transformed variable preserves the order.
+
+* When $\lambda=1$, $x^{\lambda-1}=x^0=1$. So the distance between two observations from the $x$ variable maps exactly to the same distance between the two transformed values, hence no transformation (i.e., spread or compression) is done.
+
+* When $x=1$, $x^{\lambda-1}=1$ regardless of the $\lambda$ value. So all the derivative function curves must intersect at $(1, 1)$ on the graph below.
+
+```{r}
+ggplot() +
+  xlim(0.5, 1.5) + ylim(0, 3) +
+  geom_hline(yintercept = 1, color = "darkgray", linetype = "dashed") +
+  annotate(
+    geom = "text",
+    x = 0.53, y = 0.9,
+    label = "paste(lambda, ' = 1')",
+    hjust = 0,
+    parse = TRUE, color = "darkgray"
+  ) +
+  geom_hline(yintercept = 0) +
+  geom_function(fun = function(x) x^(-3/2), color = "orange") +
+  annotate(
+    geom = "text",
+    x = 0.53, y = 0.5^(-3/2),
+    label = "paste(lambda, ' = ', -frac(1, 2))",
+    hjust = 0,
+    parse = TRUE, color = "orange"
+  ) +
+  geom_function(fun = function(x) x^(-1)) +
+  annotate(
+    geom = "text",
+    x = 0.53, y = 0.5^(-1),
+    label = "paste(lambda, ' = 0, log trans')",
+    hjust = 0,
+    parse = TRUE
+  ) +
+  geom_function(fun = function(x) x^(-1/2), color = "red") +
+  annotate(
+    geom = "text",
+    x = 0.53, y = 0.5^(-1/2),
+    label = "paste(lambda, ' = ', frac(1, 2))",
+    hjust = 0,
+    parse = TRUE, color = "red"
+  ) +
+  labs(
+    x = expression(x), y = expression(frac(dy, dx)),
+    title = expression(paste("First derivative functions of scaled power transformation = ", x^{lambda - 1}))
+  )
+```
+
+When the first derivative values are above 1 (i.e., when $\lambda < 1$ and $0 < x < 1$), a distance of 1 in the $x$ variable would be translated to a distance greater than 1 in the transformed variable $y$, because $\frac{dy}{dx} > 1$. This is the *spread out* effect for small values (more precisely values less than 1).
+
+We will use a right-skewed sample to illustrate the transformation.
+
+```{r}
+set.seed(42)
+# A log-normal distribution
+x <- rlnorm(500)
+```
+
+A few summary stats using the EDA techniques explained above.
+
+```{r}
+summary(x)
+```
+
+The distribution is right-skewed because the max value is much larger than the IQR.
+
+```{r}
+MASS::truehist(x, nbins = 30)
+lines(density(x), lwd = 2, lty = 2, col = "red")
+```
+
+The histogram and density plot show the long tail to the right.
+
+```{r}
+ggplot(data.frame(x = x), aes(x)) + geom_boxplot()
+```
+
+The box plot shows the "outliers" to the right.
+
+```{r}
+log.x <- log(x)
+MASS::truehist(log.x, nbins = 30)
+lines(density(log.x), lwd = 2, lty = 2, col = "red")
+```
+
+The histogram of the transformed variable is still rugged, but the density plot shows that the distribution of the tranformed variable is much more "normal" and hence symmetric than before.
+
+The plots below show that as $\lambda$ drops, the transformed variable's distribution becomes less and less right-skewed, indicating more potent transformation. When $\lambda$ drops below 0, the transformed variable's distribution starts to appear left-skewed.
+
+```{r}
+powerPlot <- function(lambda = 0, main = "") {
+  power.x <- bcPower(x, lambda)
+  MASS::truehist(power.x, nbins = 30, main = main)
+  lines(density(power.x), lwd = 2, lty = 2, col = "red")
+}
+par(mfrow=c(2,2))
+powerPlot(0.75, expression(paste(lambda, "= 0.75")))
+powerPlot(0.5, expression(paste(lambda, "= 0.25")))
+powerPlot(0, expression(paste("log (", lambda, "= 0)")))
+powerPlot(-0.25, expression(paste(lambda, "= -0.25")))
+```
+
+We can use the `symbox()` function to see which transformation would give the best symmetric results.
+
+```{r}
+symbox(x)
+```
+
+It's clear from the graph above that log transformation is the best to achieve symmetry.
+
+#### Power transformation with negative values
+
+The Box-Cox power transformation requires the $x$ variable to be strictly positive. If the $x$ variable has zero or negative values, we can use the `bcnPower()` function to transform the variable. It requires two parameters: $\lambda$ and $\gamma$. We can use the `powerTransform()` function to estimate the parameters. Once the transformation is done, we can use the `bcnPowerInverse()` function to reverse the transformation to get the original values.

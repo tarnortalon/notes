@@ -37,3 +37,12 @@ Once the server is up and running, we can create a database.
 ```
 createdb mydatabasename
 ```
+
+## Server
+
+To check the port:
+
+```
+# in psql CLI
+jarodmeng=# SHOW port;
+```

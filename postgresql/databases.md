@@ -23,3 +23,10 @@ To list tables within a database:
 # in psql CLI
 jarodmeng=# \dt
 ```
+
+To show current schema:
+
+```
+# in psql CLI
+jarodmeng=# SELECT CURRENT_SCHEMA();
+```

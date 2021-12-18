@@ -79,3 +79,23 @@ portfolios.2 %>%
   PerformanceAnalytics::chart.RollingPerformance(
     width=252, legend.loc="bottomright", main="Rolling 1yr % returns"
   )
+
+AAPL <- tq_get("AAPL", get = "stock.prices", from = "2015-09-01", to = "2016-12-31")
+
+AAPL %>%
+  ggplot(aes(x = date, y = close)) +
+  geom_candlestick(aes(open = open, high = high, low = low, close = close)) +
+  geom_ma(ma_fun = SMA, n = 50, linetype = 5, size = 1.25) +
+  geom_ma(ma_fun = SMA, n = 200, color = "red", size = 1.25) + 
+  labs(title = "AAPL Candlestick Chart", 
+       subtitle = "50 and 200-Day SMA", 
+       y = "Closing Price", x = "") + 
+  coord_x_date(xlim = c(end - weeks(24), end),
+               ylim = c(100, 120)) + 
+  theme_tq()
+
+AAPL %>%
+  ggplot(aes(x = date, y = close)) +
+  geom_line() +
+  labs(title = "AAPL Line Chart", y = "Closing Price", x = "") + 
+  theme_tq()

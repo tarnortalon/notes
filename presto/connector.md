@@ -30,3 +30,10 @@ After this is done, we can access the database in Presto.
 ```
 presto --catalog postgresql --schema public
 ```
+
+In the Presto command line, we can check the schema and tables.
+
+```
+SHOW SCHEMAS FROM postgresql;
+SHOW TABLES FROM postgresql.public;
+```

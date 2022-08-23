@@ -27,6 +27,12 @@ The default file has a default database called `postgres`. It's meant to be the 
 To start the server:
 
 ```
+brew services restart postgresql
+```
+
+Or start the server in the foreground:
+
+```
 pg_ctl -D /usr/local/var/postgres start
 ```
 

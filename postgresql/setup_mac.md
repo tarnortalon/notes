@@ -14,6 +14,12 @@ To initialize the physical space to allocate databases, we need to run the follo
 initdb /usr/local/var/postgres
 ```
 
+What Homebrew automatically runs:
+
+```
+initdb --locale=C -E UTF-8 /usr/local/var/postgres
+```
+
 The default file has a default database called `postgres`. It's meant to be the default database for any third-party tools that you are using in combination with PostgreSQL.
 
 ## Running

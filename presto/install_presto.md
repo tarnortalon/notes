@@ -29,44 +29,45 @@ This is actually a link to another folder.
 
 ```shell
 ~ % ls -l /usr/local/opt/prestodb
-lrwxr-xr-x  1 jarodmeng  admin  24 Jul 10 12:35 /usr/local/opt/prestodb -> ../Cellar/prestodb/0.256
+lrwxr-xr-x  1 jarodm  admin  26 Feb 24 20:40 /usr/local/opt/prestodb -> ../Cellar/prestodb/0.285.1
 ```
 
 So the actual folder is
 
 ```
-/usr/local/Cellar/prestodb/0.256
+/usr/local/Cellar/prestodb/0.285.1
 ```
 
 We can list all the files in the folder.
 
 ```shell
-~ % ls -l /usr/local/Cellar/prestodb/0.256
-total 400
--rw-r--r--  1 jarodmeng  admin    1133 Jul 10 12:35 INSTALL_RECEIPT.json
--rw-r--r--  1 jarodmeng  admin  191539 Jun 25 13:56 NOTICE
--rw-r--r--  1 jarodmeng  admin     126 Jun 25 13:56 README.txt
-drwxr-xr-x  4 jarodmeng  admin     128 Jul 10 12:35 bin
--rw-r--r--  1 jarodmeng  admin     575 Jul 10 12:35 homebrew.mxcl.prestodb.plist
-drwxr-xr-x  7 jarodmeng  admin     224 Jun 25 13:56 libexec
+~ % ls -l /usr/local/Cellar/prestodb/0.285.1
+total 416
+-rw-r--r--  1 jarodm  admin    6174 Feb 24 20:40 INSTALL_RECEIPT.json
+-rw-r--r--  1 jarodm  admin  191539 Dec 30 12:33 NOTICE
+-rw-r--r--  1 jarodm  admin     126 Dec 30 12:33 README.txt
+drwxr-xr-x  4 jarodm  admin     128 Feb 24 20:40 bin
+-rw-r--r--  1 jarodm  admin     684 Feb 24 20:40 homebrew.mxcl.prestodb.plist
+-rw-r--r--  1 jarodm  admin     218 Feb 24 20:40 homebrew.prestodb.service
+drwxr-xr-x  7 jarodm  admin     224 Dec 30 12:33 libexec
 ```
 
 The `bin` folder has two executable scripts.
 
 ```shell
-~ % ls -l /usr/local/Cellar/prestodb/0.256/bin
+~ % ls -l /usr/local/Cellar/prestodb/0.285.1/bin
 total 16
--r-xr-xr-x  1 jarodmeng  admin  217 Jul 10 12:35 presto
--r-xr-xr-x  1 jarodmeng  admin  162 Jul 10 12:35 presto-server
+-r-xr-xr-x  1 jarodm  admin  224 Feb 24 20:40 presto
+-r-xr-xr-x  1 jarodm  admin  195 Feb 24 20:40 presto-server
 ```
 
 `presto` invokes the Presto command line.
 
 ```shell
-~ % cat /usr/local/Cellar/prestodb/0.256/bin/presto
+~ % cat /usr/local/Cellar/prestodb/0.285.1/bin/presto
 #!/bin/bash
-export JAVA_HOME="${JAVA_HOME:-/usr/local/opt/openjdk/libexec/openjdk.jdk/Contents/Home}"
-exec "${JAVA_HOME}/bin/java"  -jar "/usr/local/Cellar/prestodb/0.256/libexec/presto-cli-0.256-executable.jar" "$@"
+export JAVA_HOME="${JAVA_HOME:-/usr/local/opt/openjdk@11/libexec/openjdk.jdk/Contents/Home}"
+exec "${JAVA_HOME}/bin/java"  -jar "/usr/local/Cellar/prestodb/0.285.1/libexec/presto-cli-0.285.1-executable.jar" "$@"
 ```
 
 It basically calls a `jar` executable which is the command line tool for Presto.
@@ -74,9 +75,9 @@ It basically calls a `jar` executable which is the command line tool for Presto.
 `presto-server` starts the Presto server.
 
 ```shell
-~ % cat /usr/local/Cellar/prestodb/0.256/bin/presto-server
+~ % cat /usr/local/Cellar/prestodb/0.285.1/bin/presto-server
 #!/bin/bash
-JAVA_HOME="${JAVA_HOME:-/usr/local/opt/openjdk/libexec/openjdk.jdk/Contents/Home}" exec "/usr/local/Cellar/prestodb/0.256/libexec/bin/launcher"  "$@"
+JAVA_HOME="${JAVA_HOME:-/usr/local/opt/openjdk@11/libexec/openjdk.jdk/Contents/Home}" PATH="$JAVA_HOME/bin:$PATH" exec "/usr/local/Cellar/prestodb/0.285.1/libexec/bin/launcher"  "$@"
 ```
 
 This script calls the `launcher` command to start the server.

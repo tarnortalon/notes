@@ -7,26 +7,26 @@ $> psql -l
 
 ```
 # in psql CLI
-jarodmeng=# \l
+jarodm=# \l
 ```
 
 To switch to a database:
 
 ```
 # in psql CLI
-jarodmeng=# \c postgres
+jarodm=# \c postgres
 ```
 
 To list tables within a database:
 
 ```
 # in psql CLI
-jarodmeng=# \dt
+jarodm=# \dt
 ```
 
 To show current schema:
 
 ```
 # in psql CLI
-jarodmeng=# SELECT CURRENT_SCHEMA();
+jarodm=# SELECT CURRENT_SCHEMA();
 ```

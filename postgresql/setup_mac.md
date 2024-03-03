@@ -11,13 +11,7 @@ brew install postgresql
 To initialize the physical space to allocate databases, we need to run the following. Note that Homebrew automatically runs this when installing `postgresql`.
 
 ```
-initdb /usr/local/var/postgres
-```
-
-What Homebrew automatically runs:
-
-```
-initdb --locale=C -E UTF-8 /usr/local/var/postgres
+initdb --locale=C -E UTF-8 /usr/local/var/postgresql@14
 ```
 
 The default file has a default database called `postgres`. It's meant to be the default database for any third-party tools that you are using in combination with PostgreSQL.
@@ -27,27 +21,25 @@ The default file has a default database called `postgres`. It's meant to be the 
 To start the server:
 
 ```
-brew services restart postgresql
+brew services start postgresql@14
 ```
 
-Or start the server in the foreground:
+## User
+
+To check the list of users:
 
 ```
-pg_ctl -D /usr/local/var/postgres start
-```
-
-And to stop the server:
-
-```
-pg_ctl -D /usr/local/var/postgres stop
+# run `psql` into CLI first
+jarodm=# \du
 ```
 
 ## Databases
 
-Once the server is up and running, we can create a database.
+Once the server is up and running, we can create a database before we can run
+`psql`.
 
 ```
-createdb mydatabasename
+createdb jarodm
 ```
 
 ## Server
